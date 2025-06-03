@@ -1,0 +1,11 @@
+{
+    "penalties": {
+        "wrongGuess": 2
+    },
+    "styles": {
+        "foundWord": {
+            "color": "#4CAF50",
+            "backgroundColor": "#E8F5E9"
+        }
+    }
+}
