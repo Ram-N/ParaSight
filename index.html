@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parasight - Word Guessing Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main class="container">
+        <h1>ParaSight</h1>
+        <section id="game-area">
+            <div id="paragraph-container"></div>
+            <form id="guess-form" autocomplete="off">
+                <input type="text" id="guess-input" placeholder="Enter your guess..." aria-label="Guess input"
+                    required />
+                <button type="submit">Guess</button>
+            </form>
+            <div id="score">Score: <span id="score-value">0</span>/100</div>
+            <div id="vowel-selection">
+                <p>Choose a vowel to reveal:</p>
+                <div class="vowel-buttons">
+                    <button type="button" class="vowel-tile" data-vowel="a">A</button>
+                    <button type="button" class="vowel-tile" data-vowel="i">I</button>
+                    <button type="button" class="vowel-tile" data-vowel="o">O</button>
+                    <button type="button" class="vowel-tile" data-vowel="u">U</button>
+                </div>
+            </div>
+            
+            <div id="clues-container">
+                <h2>Clues</h2>
+                <ul id="clues-list"></ul>
+            </div>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+
+</html>

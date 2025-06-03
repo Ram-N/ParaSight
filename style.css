@@ -1,0 +1,173 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    color: #222;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #4a90e2;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+}
+
+#paragraph-container {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    padding: 25px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Style for masked words */
+#paragraph-container [data-masked="true"] {
+    font-family: 'Courier New', monospace;
+    background-color: #fff9c4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    letter-spacing: 2px;
+}
+
+#clues-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+#clues-container h2 {
+    color: #2c3e50;
+    margin-top: 0;
+}
+
+#clues-list {
+    list-style-type: none;
+    padding-left: 0;
+    column-count: 2;
+    column-gap: 40px;
+}
+
+#clues-list li {
+    margin-bottom: 12px;
+    padding-left: 20px;
+    position: relative;
+    break-inside: avoid; /* Prevent clues from breaking across columns */
+}
+
+#clues-list li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #4a90e2;
+}
+
+#clues-list .found {
+    color: #4CAF50;
+    text-decoration: line-through;
+}
+
+#clues-list .found:before {
+    color: #4CAF50;
+}
+
+#guess-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#guess-input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+button:hover {
+    background: #357abd;
+}
+
+#score {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#vowel-selection {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.vowel-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.vowel-tile {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+    background: #f4e4bc;
+    border: 2px solid #c4a484;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.vowel-tile:before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+    border-radius: 4px;
+}
+
+.vowel-tile:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.vowel-tile.disabled {
+    background: #d1d1d1;
+    border-color: #999;
+    cursor: not-allowed;
+    color: #666;
+    transform: none;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
