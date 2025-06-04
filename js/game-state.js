@@ -1,27 +1,39 @@
 // Core game state and logic
-let currentParagraph = null;
-let gameParameters = null;
-let allParagraphs = null;
-let chosenVowel = '';
-
 export const gameState = {
-    words: [],
-    score: 0,
-    maxScore: 0
+    // Current game session state
+    current: {
+        paragraph: null,
+        chosenVowel: '',
+        words: [],
+        score: 0,
+        maxScore: 0
+    },
+    // Game configuration
+    config: {
+        parameters: null,
+        paragraphs: null
+    }
 };
 
 // Getters
-export function getCurrentParagraph() { return currentParagraph; }
-export function getGameParameters() { return gameParameters; }
-export function getAllParagraphs() { return allParagraphs; }
-export function getChosenVowel() { return chosenVowel; }
+export function getCurrentParagraph() { return gameState.current.paragraph; }
+export function getGameParameters() { return gameState.config.parameters; }
+export function getAllParagraphs() { return gameState.config.paragraphs; }
+export function getChosenVowel() { return gameState.current.chosenVowel; }
+export function getCurrentWords() { return gameState.current.words; }
+export function getCurrentScore() { return gameState.current.score; }
+export function getMaxScore() { return gameState.current.maxScore; }
 
 // Setters
-export function setCurrentParagraph(paragraph) { currentParagraph = paragraph; }
-export function setGameParameters(params) { gameParameters = params; }
-export function setAllParagraphs(paragraphs) { allParagraphs = paragraphs; }
-export function setVowel(vowel) { chosenVowel = vowel; }
+export function setCurrentParagraph(paragraph) { gameState.current.paragraph = paragraph; }
+export function setGameParameters(params) { gameState.config.parameters = params; }
+export function setAllParagraphs(paragraphs) { gameState.config.paragraphs = paragraphs; }
+export function setVowel(vowel) { gameState.current.chosenVowel = vowel; }
+export function setCurrentWords(words) { gameState.current.words = words; }
+export function setScore(score) { gameState.current.score = score; }
+export function setMaxScore(score) { gameState.current.maxScore = score; }
 
+// Game logic functions
 export function maskWord(word, vowel) {
     return word.replace(/[^\W_]/gi, (char) => {
         if (char.toLowerCase() === vowel) return char;
@@ -43,27 +55,28 @@ export function findWordPositions(text, word) {
 }
 
 export function isGameComplete() {
-    const complete = gameState.words.every(word => word.found);
+    const complete = gameState.current.words.every(word => word.found);
     console.log('Game completion check:', {
         complete,
-        totalWords: gameState.words.length,
-        foundWords: gameState.words.filter(w => w.found).length,
-        wordStatuses: gameState.words.map(w => ({word: w.word, found: w.found}))
+        totalWords: gameState.current.words.length,
+        foundWords: gameState.current.words.filter(w => w.found).length,
+        wordStatuses: gameState.current.words.map(w => ({word: w.word, found: w.found}))
     });
     return complete;
 }
 
 export function processGuess(guess) {
-    const wordObj = gameState.words.find(w => 
+    const wordObj = gameState.current.words.find(w => 
         w.word.toLowerCase() === guess.toLowerCase() && !w.found
     );
     
     if (wordObj) {
         wordObj.found = true;
-        gameState.score += wordObj.points;
+        gameState.current.score += wordObj.points;
         return { success: true, wordObj };
     } else {
-        gameState.score = Math.max(0, gameState.score - gameParameters.penalties.wrongGuess);
+        gameState.current.score = Math.max(0, 
+            gameState.current.score - gameState.config.parameters.penalties.wrongGuess);
         return { success: false };
     }
 }

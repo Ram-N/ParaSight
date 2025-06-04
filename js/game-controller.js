@@ -33,16 +33,17 @@ export function startGame() {
     const randomIndex = Math.floor(Math.random() * allParagraphs.length);
     GameState.setCurrentParagraph(allParagraphs[randomIndex]);
     const paragraph = GameState.getCurrentParagraph();
-    console.log('Starting game with paragraph:', paragraph.id);
-      // Reset game state
-    GameState.gameState.score = 0;
-    GameState.gameState.words = paragraph.hiddenWords.map(word => ({
+    console.log('Starting game with paragraph:', paragraph.id);    // Reset game state
+    GameState.setScore(0);
+    const words = paragraph.hiddenWords.map(word => ({
         ...word,
         found: false,
         positions: GameState.findWordPositions(paragraph.text, word.word)
     }));
+    GameState.setCurrentWords(words);
     
-    GameState.gameState.maxScore = GameState.gameState.words.reduce((sum, word) => sum + word.points, 0);
+    const maxScore = words.reduce((sum, word) => sum + word.points, 0);
+    GameState.setMaxScore(maxScore);
     GameState.setVowel('');
     
     setupGame();

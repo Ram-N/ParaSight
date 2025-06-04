@@ -1,11 +1,16 @@
 // UI rendering and DOM manipulation
-import { gameState, getCurrentParagraph, maskWord, getChosenVowel } from './game-state.js';
+import { 
+    getCurrentParagraph,
+    getCurrentWords,
+    getCurrentScore,
+    getMaxScore,
+    maskWord
+} from './game-state.js';
 
 export function renderParagraph(vowel) {
     const currentParagraph = getCurrentParagraph();
     if (!currentParagraph) return;
-    
-    const allReplacements = gameState.words
+      const allReplacements = getCurrentWords()
         .flatMap(word => 
             word.positions.map(pos => ({
                 ...pos,
@@ -36,7 +41,7 @@ export function renderClues() {
     const cluesList = document.getElementById('clues-list');
     cluesList.innerHTML = '';
     
-    gameState.words.forEach(({ clue, word, found }, idx) => {
+    getCurrentWords().forEach(({ clue, word, found }, idx) => {
         const li = document.createElement('li');
         li.innerHTML = `${idx + 1}. ${clue} (${word.length} letters) ${found ? '✓' : ''}`;
         if (found) li.classList.add('found');
@@ -45,11 +50,12 @@ export function renderClues() {
 }
 
 export function updateScore() {
-    document.getElementById('score-value').textContent = gameState.score;
+    document.getElementById('score-value').textContent = getCurrentScore();
 }
 
-export function showGameOver() {
-    const scorePercentage = Math.round((gameState.score / gameState.maxScore) * 100);
+export function showGameOver() {    const score = getCurrentScore();
+    const maxScore = getMaxScore();
+    const scorePercentage = Math.round((score / maxScore) * 100);
     
     const input = document.getElementById('guess-input');
     input.disabled = true;
@@ -60,7 +66,7 @@ export function showGameOver() {
     endGameMessage.innerHTML = `
         <h2>Congratulations! 🎉</h2>
         <p>You've found all the hidden words!</p>
-        <p>Final Score: ${gameState.score}/${gameState.maxScore} (${scorePercentage}%)</p>
+        <p>Final Score: ${score}/${maxScore} (${scorePercentage}%)</p>
     `;
     
     document.getElementById('paragraph-container').insertAdjacentElement('afterend', endGameMessage);
