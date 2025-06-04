@@ -10,6 +10,7 @@ let gameState = {
 };
 
 let gameParameters = null;
+let allParagraphs = null;
 
 // Load both game data and parameters
 async function loadGameData() {
@@ -30,26 +31,58 @@ async function loadGameData() {
         ]);
         
         gameParameters = parameters;
-        currentParagraph = gameData.paragraphs[0];
+        allParagraphs = gameData.paragraphs;
         
-        // Initialize game state with enhanced word objects
-        gameState.words = currentParagraph.hiddenWords.map(word => ({
-            ...word,
-            found: false,
-            positions: findWordPositions(currentParagraph.text, word.word)
-        }));
-        
-        // Calculate max possible score
-        gameState.maxScore = gameState.words.reduce((sum, word) => sum + word.points, 0);
-        
-        // Initialize the game
-        renderParagraph('');
-        renderClues();
-        setupGuessing();
+        // Start the game with a random paragraph
+        startGame();
     } catch (error) {
         console.error('Error loading game data:', error);
         document.getElementById('paragraph-container').innerHTML = 'Error loading game data. Please refresh the page.';
     }
+}
+
+function startGame() {
+    // Pick a random paragraph
+    const randomIndex = Math.floor(Math.random() * allParagraphs.length);
+    currentParagraph = allParagraphs[randomIndex];
+    console.log('Starting game with paragraph:', currentParagraph.id);
+    
+    // Reset game state
+    gameState.score = 0;
+    gameState.words = currentParagraph.hiddenWords.map(word => ({
+        ...word,
+        found: false,
+        positions: findWordPositions(currentParagraph.text, word.word)
+    }));
+    
+    // Calculate max possible score
+    gameState.maxScore = gameState.words.reduce((sum, word) => sum + word.points, 0);
+    
+    // Initialize the game UI
+    renderParagraph('');
+    renderClues();
+    setupGuessing();
+    
+    // Reset vowel selection
+    chosenVowel = '';
+    const vowelButtons = document.querySelectorAll('.vowel-tile');
+    vowelButtons.forEach(btn => {
+        btn.classList.remove('disabled');
+    });
+    
+    // Reset guess input
+    const input = document.getElementById('guess-input');
+    input.disabled = false;
+    input.placeholder = 'Enter your guess...';
+    
+    // Remove any existing game-over message
+    const existingMessage = document.querySelector('.game-over-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Update score display
+    updateScore();
 }
 
 function maskWord(word, vowel) {

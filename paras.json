@@ -4,8 +4,66 @@
             "id": 1,
             "text": "Parasight is a unique word guessing game designed to challenge your vocabulary and deduction skills. Players are presented with a paragraph where certain words are hidden, and they must use clues to reveal them. The game encourages careful thinking and rewards both knowledge and intuition.",
             "hiddenWords": [
-                { "word": "unique", "clue": "One of a kind", "clue2": "Not like anything else", "points": 10 },
-                { "word": "challenge", "clue": "A test of ability or skill", "clue2": "Something that puts your abilities to the test", "points": 12 }
+                {
+                    "word": "unique",
+                    "clue": "One of a kind",
+                    "clue2": "Not like anything else",
+                    "points": 10
+                },
+                {
+                    "word": "challenge",
+                    "clue": "A test of ability or skill",
+                    "clue2": "Something that puts your abilities to the test",
+                    "points": 12
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "text": "The world of technology is constantly evolving, with new innovations appearing almost every day. The internet has transformed how we communicate, work, and play, making it easier to stay connected with people across the globe. However, with these advancements come challenges, such as ensuring privacy and security. The rise of social media has made it both easier and more complicated to maintain personal boundaries. It's up to individuals and organizations to stay vigilant in safeguarding information. Technology's potential is limitless, but how we use it will determine its impact on society.",
+            "hiddenWords": [
+                { "word": "innovations", "clue": "Groundbreaking developments", "clue2": "New ideas or inventions", "points": 10 },
+                { "word": "internet", "clue": "A vast global network", "clue2": "The world wide web", "points": 8 },
+                { "word": "transformed", "clue": "Completely changed", "clue2": "Turned into something new", "points": 9 },
+                { "word": "communicate", "clue": "To exchange information", "clue2": "To talk or send messages", "points": 7 },
+                { "word": "boundaries", "clue": "Limits or borders", "clue2": "Lines separating things", "points": 6 },
+                { "word": "vigilant", "clue": "Watchful for potential danger", "clue2": "On alert", "points": 8 },
+                { "word": "safeguarding", "clue": "Protecting from harm", "clue2": "Keeping something secure", "points": 10 },
+                { "word": "privacy", "clue": "The state of being free from observation", "clue2": "Personal space and information", "points": 7 },
+                { "word": "limitless", "clue": "Without any boundaries", "clue2": "Infinite in scope", "points": 9 },
+                { "word": "impact", "clue": "The strong effect or influence", "clue2": "Result of an action", "points": 8 }
+            ]
+        },
+        {
+            "id": 3,
+            "text": "In the 1950s, the development of the transistor revolutionized the world of electronics. This small device, capable of amplifying electrical signals, replaced the bulky vacuum tubes that were previously used in radios and computers. The transistor paved the way for modern computing, leading to the miniaturization of electronic devices. By the 1960s, transistors were integral to the first generation of computers, and their use continued to expand across industries, from communications to space exploration. The invention of the transistor was a milestone in the field of technology, laying the foundation for the digital age we live in today.",
+            "hiddenWords": [
+                { "word": "transistor", "clue": "A small electronic component that amplifies signals", "clue2": "A key element in modern electronics", "points": 10 },
+                { "word": "revolutionized", "clue": "Radically changed or transformed", "clue2": "To make a dramatic impact", "points": 12 },
+                { "word": "amplifying", "clue": "Increasing the strength of a signal", "clue2": "Making something louder or stronger", "points": 9 },
+                { "word": "vacuum tubes", "clue": "Glass tubes used in early electronics", "clue2": "Devices that were replaced by transistors", "points": 8 },
+                { "word": "miniaturization", "clue": "The process of making things smaller", "clue2": "The trend towards smaller, more compact devices", "points": 11 },
+                { "word": "computers", "clue": "Machines that process data and perform calculations", "clue2": "Devices that became common in the digital age", "points": 7 },
+                { "word": "space exploration", "clue": "The investigation of outer space", "clue2": "Human activities related to traveling in space", "points": 10 },
+                { "word": "milestone", "clue": "An important event or achievement", "clue2": "A significant turning point", "points": 8 },
+                { "word": "integral", "clue": "Necessary or essential", "clue2": "A crucial part of something", "points": 7 },
+                { "word": "digital age", "clue": "The era of widespread use of digital technology", "clue2": "The current era dominated by computers and the internet", "points": 9 }
+            ]
+        },
+        {
+            "id": 4,
+            "text": "The 1980s was a decade defined by bold fashion choices and a rise in women's empowerment. High-waisted jeans, neon colors, and oversized blazers became iconic elements of the era. Women's fashion in the 1980s was heavily influenced by pop culture, with celebrities like Madonna and Princess Diana setting trends. The power suit, with its sharp lines and shoulder pads, symbolized women's increasing presence in the corporate world. At the same time, casual styles like leggings and graphic tees represented a shift towards comfort and casual chic. The decade also saw the rise of supermodels, with women like Cindy Crawford and Naomi Campbell becoming household names. The 1980s marked a transformative period in both fashion and women's roles in society.",
+            "hiddenWords": [
+                { "word": "empowerment", "clue": "The process of gaining confidence and control", "clue2": "Increasing one's sense of strength", "points": 12 },
+                { "word": "neon", "clue": "Bright fluorescent colors", "clue2": "Colors that glow in the dark", "points": 8 },
+                { "word": "oversized", "clue": "Larger than usual in size", "clue2": "Exaggerated proportions in fashion", "points": 9 },
+                { "word": "blazers", "clue": "A type of smart jacket often worn in professional settings", "clue2": "A stylish, tailored jacket", "points": 7 },
+                { "word": "celebrity", "clue": "A famous person, especially in entertainment", "clue2": "A well-known individual in the public eye", "points": 8 },
+                { "word": "power suit", "clue": "A formal outfit symbolizing professionalism", "clue2": "A sharp, business-like outfit, often with shoulder pads", "points": 10 },
+                { "word": "shoulder pads", "clue": "Padding inserted into clothing to emphasize the shoulders", "clue2": "A fashion element to create a broader silhouette", "points": 9 },
+                { "word": "leggings", "clue": "Tight-fitting clothing worn on the legs", "clue2": "Comfortable, stretchy pants often worn casually", "points": 8 },
+                { "word": "supermodels", "clue": "Top-tier fashion models who achieve worldwide fame", "clue2": "High-profile models, often seen in major ad campaigns", "points": 10 },
+                { "word": "transformative", "clue": "Causing a major change or shift", "clue2": "Radically altering something", "points": 11 }
             ]
         }
     ]
