@@ -5,14 +5,7 @@
             "text": "Parasight is a unique word guessing game designed to challenge your vocabulary and deduction skills. Players are presented with a paragraph where certain words are hidden, and they must use clues to reveal them. The game encourages careful thinking and rewards both knowledge and intuition.",
             "hiddenWords": [
                 { "word": "unique", "clue": "One of a kind", "clue2": "Not like anything else", "points": 10 },
-                { "word": "challenge", "clue": "A test of ability or skill", "clue2": "Something that puts your abilities to the test", "points": 12 },
-                { "word": "vocabulary", "clue": "Collection of words known", "clue2": "All the words you know", "points": 15 },
-                { "word": "deduction", "clue": "Logical reasoning", "clue2": "Sherlock Holmes' specialty", "points": 13 },
-                { "word": "skills", "clue": "Abilities acquired by training", "clue2": "Things you learn to do well", "points": 8 },
-                { "word": "presented", "clue": "Given or shown", "clue2": "Displayed to an audience", "points": 12 },
-                { "word": "paragraph", "clue": "A section of writing", "clue2": "A group of related sentences", "points": 10 },
-                { "word": "certain", "clue": "Specific but not named", "clue2": "Particular ones", "points": 8 },
-                { "word": "reveal", "clue": "To make visible", "clue2": "Show what was hidden", "points": 8 },                { "word": "encourages", "clue": "Gives support or confidence", "clue2": "Helps you feel brave enough to try", "points": 14 }
+                { "word": "challenge", "clue": "A test of ability or skill", "clue2": "Something that puts your abilities to the test", "points": 12 }
             ]
         }
     ]

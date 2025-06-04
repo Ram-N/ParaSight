@@ -139,8 +139,7 @@ function setupGuessing() {
             w.word.toLowerCase() === guess && !w.found
         );
         console.log('Matching word object:', wordObj);
-        
-        if (wordObj) {
+          if (wordObj) {
             // Correct guess!
             wordObj.found = true;
             gameState.score += wordObj.points;
@@ -150,9 +149,16 @@ function setupGuessing() {
             renderClues();
             updateScore();
             
-            // Visual feedback
+            // Visual feedback for correct guess
             input.classList.add('correct');
             setTimeout(() => input.classList.remove('correct'), 1000);
+            
+            // Check for game completion (after UI updates)
+            console.log('Checking game completion after correct guess:', guess);
+            if (isGameComplete()) {
+                console.log('Game complete detected! Triggering end game.');
+                endGame();
+            }
         } else {
             // Wrong guess
             gameState.score = Math.max(0, gameState.score - gameParameters.penalties.wrongGuess);
@@ -170,6 +176,42 @@ function setupGuessing() {
 
 function updateScore() {
     document.getElementById('score-value').textContent = gameState.score;
+}
+
+// Check if all words have been found
+function isGameComplete() {
+    const complete = gameState.words.every(word => word.found);
+    console.log('Game completion check:', {
+        complete,
+        totalWords: gameState.words.length,
+        foundWords: gameState.words.filter(w => w.found).length,
+        wordStatuses: gameState.words.map(w => ({word: w.word, found: w.found}))
+    });
+    return complete;
+}
+
+function endGame() {
+    // Calculate final score percentage
+    const scorePercentage = Math.round((gameState.score / gameState.maxScore) * 100);
+    
+    // Disable the guess form
+    const form = document.getElementById('guess-form');
+    const input = document.getElementById('guess-input');
+    input.disabled = true;
+    input.placeholder = 'Game Complete!';
+    
+    // Create and show the end game message
+    const endGameMessage = document.createElement('div');
+    endGameMessage.className = 'game-over-message';
+    endGameMessage.innerHTML = `
+        <h2>Congratulations! 🎉</h2>
+        <p>You've found all the hidden words!</p>
+        <p>Final Score: ${gameState.score}/${gameState.maxScore} (${scorePercentage}%)</p>
+    `;
+    
+    // Insert the message after the paragraph container
+    const paragraphContainer = document.getElementById('paragraph-container');
+    paragraphContainer.insertAdjacentElement('afterend', endGameMessage);
 }
 
 // Initial setup: handle vowel selection and render clues
