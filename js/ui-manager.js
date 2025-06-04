@@ -1,4 +1,9 @@
-// UI rendering and DOM manipulation
+/**
+ * @fileoverview UI rendering and DOM manipulation module for ParaSight.
+ * Handles all user interface updates and DOM interactions.
+ * @module ui-manager
+ */
+
 import { 
     getCurrentParagraph,
     getCurrentWords,
@@ -7,10 +12,17 @@ import {
     maskWord
 } from './game-state.js';
 
+/**
+ * Renders the paragraph with masked words
+ * @param {string} vowel - The vowel to reveal in masked words
+ */
 export function renderParagraph(vowel) {
     const currentParagraph = getCurrentParagraph();
     if (!currentParagraph) return;
-      const allReplacements = getCurrentWords()
+    
+    // Create a list of all word positions that need to be replaced
+    // Sort from end to start to avoid index shifting during replacement
+    const allReplacements = getCurrentWords()
         .flatMap(word => 
             word.positions.map(pos => ({
                 ...pos,
@@ -22,8 +34,10 @@ export function renderParagraph(vowel) {
     
     let maskedParagraph = currentParagraph.text;
     
+    // Replace words one by one, starting from the end
     allReplacements.forEach(({ start, end, word, found }) => {
         const wordToReplace = maskedParagraph.substring(start, end);
+        // Use different styling for found vs masked words
         const maskedWord = found 
             ? `<span data-masked="true" class="found">${wordToReplace}</span>`
             : `<span data-masked="true">${maskWord(wordToReplace, vowel)}</span>`;
@@ -37,6 +51,9 @@ export function renderParagraph(vowel) {
     document.getElementById('paragraph-container').innerHTML = maskedParagraph;
 }
 
+/**
+ * Renders the clues list for hidden words
+ */
 export function renderClues() {
     const cluesList = document.getElementById('clues-list');
     cluesList.innerHTML = '';
@@ -49,10 +66,16 @@ export function renderClues() {
     });
 }
 
+/**
+ * Updates the score display
+ */
 export function updateScore() {
     document.getElementById('score-value').textContent = getCurrentScore();
 }
 
+/**
+ * Displays the game over message with final score
+ */
 export function showGameOver() {    const score = getCurrentScore();
     const maxScore = getMaxScore();
     const scorePercentage = Math.round((score / maxScore) * 100);
@@ -72,16 +95,27 @@ export function showGameOver() {    const score = getCurrentScore();
     document.getElementById('paragraph-container').insertAdjacentElement('afterend', endGameMessage);
 }
 
+/**
+ * Sets up and returns vowel selection buttons
+ * @returns {NodeList} Collection of vowel button elements
+ */
 export function setupVowelButtons() {
     const vowelButtons = document.querySelectorAll('.vowel-tile');
     return vowelButtons;
 }
 
+/**
+ * Disables all vowel selection buttons
+ */
 export function disableVowelButtons() {
     const vowelButtons = document.querySelectorAll('.vowel-tile');
     vowelButtons.forEach(btn => btn.classList.add('disabled'));
 }
 
+/**
+ * Resets the UI to its initial state
+ * Clears game over message, resets buttons and input field
+ */
 export function resetUI() {
     const vowelButtons = document.querySelectorAll('.vowel-tile');
     vowelButtons.forEach(btn => btn.classList.remove('disabled'));

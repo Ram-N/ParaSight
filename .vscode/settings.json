@@ -1,0 +1,13 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "files.eol": "\n",
+    "javascript.suggestionActions.enabled": false,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.port": 5500
+}
