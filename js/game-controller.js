@@ -5,36 +5,37 @@
  */
 
 import {
-    checkGuess,
-    getCurrentParagraph,
-    getCurrentWords,
-    getCurrentScore,
-    getMaxScore,
-    getChosenVowel,
-    setCurrentParagraph,
-    setCurrentWords,
-    setGameParameters,
-    setAllParagraphs
-} from './game-state.js';
+  checkGuess,
+  getCurrentParagraph,
+  getCurrentWords,
+  getCurrentScore,
+  getMaxScore,
+  getChosenVowel,
+  setCurrentParagraph,
+  setCurrentWords,
+  setGameParameters,
+  setAllParagraphs,
+} from "./game-state.js";
 
 import {
-    renderParagraph,
-    renderClues,
-    updateScore,
-    showGameOver,
-    resetUI,
-    setupMarketplace
-} from './ui-manager.js';
+  renderParagraph,
+  renderClues,
+  updateScore,
+  showGameOver,
+  resetUI,
+  setupMarketplace,
+  updateLetterCounts,
+} from "./ui-manager.js";
 
 /**
  * Sets up the game UI and initializes event handlers
  * @private
  */
 function setupGame() {
-    resetUI();
-    renderParagraph('');
-    renderClues();
-    setupGuessInput();
+  resetUI();
+  renderParagraph("");
+  renderClues();
+  setupGuessInput();
 }
 
 /**
@@ -42,16 +43,16 @@ function setupGame() {
  * @private
  */
 function setupGuessing() {
-    console.log('Setting up guessing form...');
-    const form = document.getElementById('guess-form');
-    const input = document.getElementById('guess-input');
-    
-    if (!form || !input) {
-        console.error('Could not find form or input elements:', { form, input });
-        return;
-    }
-    
-    form.addEventListener('submit', handleGuess);
+  console.log("Setting up guessing form...");
+  const form = document.getElementById("guess-form");
+  const input = document.getElementById("guess-input");
+
+  if (!form || !input) {
+    console.error("Could not find form or input elements:", { form, input });
+    return;
+  }
+
+  form.addEventListener("submit", handleGuess);
 }
 
 /**
@@ -60,90 +61,90 @@ function setupGuessing() {
  * @private
  */
 function handleGuess(e) {
-    e.preventDefault();
-    const input = document.getElementById('guess-input');
-    if (!input || !(input instanceof HTMLInputElement)) return;
+  e.preventDefault();
+  const input = document.getElementById("guess-input");
+  if (!input || !(input instanceof HTMLInputElement)) return;
 
-    const guess = input.value.trim();
-    if (!guess) return;
-    
-    console.log('Submitted guess:', guess);
-    const result = checkGuess(guess);
-    
-    if (result.success) {
-        input.classList.add('correct');
-        setTimeout(() => input.classList.remove('correct'), 1000);
-        
-        renderParagraph(getChosenVowel());
-        renderClues();
-        updateScore();
-        
-        if (result.gameComplete) {
-            console.log('Game complete detected! Triggering end game.');
-            showGameOver();
-        }
-    } else {
-        input.classList.add('wrong');
-        setTimeout(() => input.classList.remove('wrong'), 1000);
-        updateScore();
+  const guess = input.value.trim();
+  if (!guess) return;
+
+  console.log("Submitted guess:", guess);
+  const result = checkGuess(guess);
+
+  if (result.success) {
+    input.classList.add("correct");
+    setTimeout(() => input.classList.remove("correct"), 1000);
+
+    renderParagraph(getChosenVowel());
+    renderClues();
+    updateScore();
+
+    if (result.gameComplete) {
+      console.log("Game complete detected! Triggering end game.");
+      showGameOver();
     }
-    
-    input.value = '';
-    input.focus();
+  } else {
+    input.classList.add("wrong");
+    setTimeout(() => input.classList.remove("wrong"), 1000);
+    updateScore();
+  }
+
+  input.value = "";
+  input.focus();
 }
 
 /**
  * Sets up the guess input field and submit button
  */
 function setupGuessInput() {
-    const input = document.getElementById('guess-input');
-    const submitButton = document.getElementById('submit-guess');
+  const input = document.getElementById("guess-input");
+  const submitButton = document.getElementById("submit-guess");
 
-    if (!input || !submitButton) return;
+  if (!input || !submitButton) return;
 
-    const handleGuess = () => {
-        if (!(input instanceof HTMLInputElement)) return;
-        
-        const guess = input.value.trim();
-        if (!guess) return;
+  const handleGuess = () => {
+    if (!(input instanceof HTMLInputElement)) return;
 
-        const result = checkGuess(guess);
-        if (result.success) {
-            input.classList.add('correct');
-            setTimeout(() => input.classList.remove('correct'), 1000);
-            
-            renderParagraph(getChosenVowel());
-            renderClues();
-            updateScore();
+    const guess = input.value.trim();
+    if (!guess) return;
 
-            if (result.gameComplete) {
-                showGameOver();
-            }
-        } else {
-            input.classList.add('wrong');
-            setTimeout(() => input.classList.remove('wrong'), 1000);
-            updateScore();
-        }
+    const result = checkGuess(guess);
+    if (result.success) {
+      input.classList.add("correct");
+      setTimeout(() => input.classList.remove("correct"), 1000);
+      renderParagraph(getChosenVowel());
+      renderClues();
+      updateScore();
+      updateLetterCounts();
 
-        input.value = '';
-        input.focus();
-    };
+      if (result.gameComplete) {
+        showGameOver();
+      }
+    } else {
+      input.classList.add("wrong");
+      setTimeout(() => input.classList.remove("wrong"), 1000);
+      updateScore();
+    }
 
-    submitButton.addEventListener('click', handleGuess);
-    input.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') {
-            handleGuess();
-        }
-    });
+    input.value = "";
+    input.focus();
+  };
+
+  submitButton.addEventListener("click", handleGuess);
+  input.addEventListener("keyup", (event) => {
+    if (event.key === "Enter") {
+      handleGuess();
+    }
+  });
 }
 
 /**
  * Renders the current game state
  */
 function renderGameState() {
-    renderParagraph('');  // Start with no vowels revealed
-    renderClues();
-    updateScore();
+  renderParagraph(""); // Start with no vowels revealed
+  renderClues();
+  updateScore();
 }
 
 /**
@@ -151,77 +152,84 @@ function renderGameState() {
  * Entry point for the game
  */
 export async function initializeGame() {
-    console.log('Window loaded, initializing game...');
-    
-    try {
-        // Load game parameters and paragraphs
-        const [params, gameData] = await Promise.all([
-            fetch('./game_parameters.json').then(r => r.json()),
-            fetch('./paras.json').then(r => r.json())
-        ]);
+  console.log("Window loaded, initializing game...");
 
-        // Check if we have valid game data
-        if (!gameData || !Array.isArray(gameData.paragraphs)) {
-            throw new Error('Invalid game data structure');
-        }
+  try {
+    // Load game parameters and paragraphs
+    const [params, gameData] = await Promise.all([
+      fetch("./game_parameters.json").then((r) => r.json()),
+      fetch("./paras.json").then((r) => r.json()),
+    ]);
 
-        // Initialize game state
-        setGameParameters(params);
-        setAllParagraphs(gameData.paragraphs);
-
-        // Set up random paragraph
-        const randomIndex = Math.floor(Math.random() * gameData.paragraphs.length);
-        /** @type {typeof gameData.paragraphs[0]} */
-        const selectedParagraph = gameData.paragraphs[randomIndex];
-        if (!selectedParagraph || !Array.isArray(selectedParagraph.hiddenWords)) {
-            throw new Error('Invalid paragraph data structure');
-        }        // Initialize game state in the correct order
-        // Filter and process hidden words to ensure they exist in the paragraph
-        const initialWords = selectedParagraph.hiddenWords
-            .filter(/** @param {import('./game-state.js').GameWord} word */ word => {
-                // Test if word appears exactly in the text
-                const wordRegex = new RegExp(`\\b${word.word}\\b`, 'g');
-                const exists = wordRegex.test(selectedParagraph.text);
-                if (!exists) {
-                    console.warn(`Warning: Hidden word "${word.word}" not found in paragraph ${selectedParagraph.id}. Ignoring this word.`);
-                }
-                return exists;
-            })
-            .map(/** @param {import('./game-state.js').GameWord} word */ word => {
-                // Find all positions of the word in the paragraph text
-                const positions = [];
-                const wordRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
-                let match;
-                while ((match = wordRegex.exec(selectedParagraph.text)) !== null) {
-                    positions.push({
-                        start: match.index,
-                        end: match.index + word.word.length
-                    });
-                }
-                
-                return {
-                    ...word,
-                    found: false,
-                    positions: positions
-                };
-            });
-          console.log('Initialized words with positions:', initialWords);
-        setCurrentWords(initialWords);
-        setCurrentParagraph(selectedParagraph);
-        updateScore(); // Ensure score is displayed after initialization        // Set up event listeners
-        setupGuessInput();
-        setupMarketplace();
-
-        // Force a delay to ensure all setup is complete
-        setTimeout(() => {
-            // Render initial game state
-            renderGameState();
-        }, 0);
-    } catch (error) {
-        console.error('Failed to initialize game:', error);
-        const container = document.getElementById('paragraph-container');
-        if (container) {
-            container.innerHTML = 'Error loading game data. Please refresh the page.';
-        }
+    // Check if we have valid game data
+    if (!gameData || !Array.isArray(gameData.paragraphs)) {
+      throw new Error("Invalid game data structure");
     }
+
+    // Initialize game state
+    setGameParameters(params);
+    setAllParagraphs(gameData.paragraphs);
+
+    // Set up random paragraph
+    const randomIndex = Math.floor(Math.random() * gameData.paragraphs.length);
+    /** @type {typeof gameData.paragraphs[0]} */
+    const selectedParagraph = gameData.paragraphs[randomIndex];
+    if (!selectedParagraph || !Array.isArray(selectedParagraph.hiddenWords)) {
+      throw new Error("Invalid paragraph data structure");
+    } // Initialize game state in the correct order
+    // Filter and process hidden words to ensure they exist in the paragraph
+    const initialWords = selectedParagraph.hiddenWords
+      .filter(
+        /** @param {import('./game-state.js').GameWord} word */ (word) => {
+          // Test if word appears exactly in the text
+          const wordRegex = new RegExp(`\\b${word.word}\\b`, "g");
+          const exists = wordRegex.test(selectedParagraph.text);
+          if (!exists) {
+            console.warn(
+              `Warning: Hidden word "${word.word}" not found in paragraph ${selectedParagraph.id}. Ignoring this word.`
+            );
+          }
+          return exists;
+        }
+      )
+      .map(
+        /** @param {import('./game-state.js').GameWord} word */ (word) => {
+          // Find all positions of the word in the paragraph text
+          const positions = [];
+          const wordRegex = new RegExp(`\\b${word.word}\\b`, "gi");
+          let match;
+          while ((match = wordRegex.exec(selectedParagraph.text)) !== null) {
+            positions.push({
+              start: match.index,
+              end: match.index + word.word.length,
+            });
+          }
+
+          return {
+            ...word,
+            found: false,
+            positions: positions,
+          };
+        }
+      );
+    console.log("Initialized words with positions:", initialWords);
+    setCurrentWords(initialWords);
+    setCurrentParagraph(selectedParagraph);
+    updateScore(); // Ensure score is displayed after initialization        // Set up event listeners
+    setupGuessInput();
+    setupMarketplace();
+
+    // Force a delay to ensure all setup is complete
+    setTimeout(() => {
+      // Render initial game state
+      renderGameState();
+      updateLetterCounts(); // Update initial letter counts
+    }, 0);
+  } catch (error) {
+    console.error("Failed to initialize game:", error);
+    const container = document.getElementById("paragraph-container");
+    if (container) {
+      container.innerHTML = "Error loading game data. Please refresh the page.";
+    }
+  }
 }

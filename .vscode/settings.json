@@ -5,7 +5,7 @@
     "files.eol": "\n",
     "javascript.suggestionActions.enabled": false,
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true
+        "source.fixAll.eslint": "explicit"
     },
     "javascript.updateImportsOnFileMove.enabled": "always",
     "liveServer.settings.donotShowInfoMsg": true,
