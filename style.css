@@ -8,9 +8,9 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -19,15 +19,15 @@ body {
 h1 {
     color: #4a90e2;
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5rem;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
 }
 
 #paragraph-container {
-    font-size: 1.25rem;
-    line-height: 1.8;
-    margin-bottom: 30px;
-    padding: 25px;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    padding: 15px;
     background: #fff;
     border: 2px solid #e0e0e0;
     border-radius: 12px;
@@ -58,15 +58,13 @@ h1 {
 #clues-list {
     list-style-type: none;
     padding-left: 0;
-    column-count: 2;
-    column-gap: 40px;
+    font-size: 0.9rem;
 }
 
 #clues-list li {
-    margin-bottom: 12px;
-    padding-left: 20px;
+    margin-bottom: 8px;
+    padding-left: 15px;
     position: relative;
-    break-inside: avoid; /* Prevent clues from breaking across columns */
 }
 
 #clues-list li:before {
@@ -130,6 +128,24 @@ button:hover {
     color: #2c3e50;
 }
 
+/* Score and input styling */
+.score-display {
+    margin: 0;
+    margin-left: 20px;
+    font-size: 1.2rem;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 #vowel-selection {
     text-align: center;
     margin: 30px 0;
@@ -143,9 +159,9 @@ button:hover {
 }
 
 .vowel-tile {
-    width: 60px;
-    height: 60px;
-    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
     font-weight: bold;
     font-family: 'Arial', sans-serif;
     background: #f4e4bc;
@@ -153,7 +169,7 @@ button:hover {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
     position: relative;
 }
 
@@ -224,4 +240,144 @@ button:hover {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.game-layout {
+    display: grid;
+    grid-template-columns: 65% 35%;
+    grid-template-rows: minmax(0, 1fr) auto minmax(0, 0.6fr);
+    grid-template-areas: 
+        "paragraph clues"
+        "input input"
+        "marketplace marketplace";
+    gap: 15px;
+    height: calc(100vh - 100px);
+    min-height: 700px;
+}
+
+.section {
+    padding: 15px;
+    border-radius: 8px;
+    overflow: auto;
+}
+
+#paragraph-section {
+    grid-area: paragraph;
+}
+
+#clues-section {
+    grid-area: clues;
+}
+
+#input-section {
+    grid-area: input;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+
+#marketplace-section {
+    grid-area: marketplace;
+}
+
+/* Common section styles */
+#paragraph-section,
+#clues-section,
+#marketplace-section,
+#input-section {
+    background: #E3F2FD;
+    border: 1px solid #BBDEFB;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+/* Market items styling */
+.marketplace-items {
+    display: grid;
+    gap: 15px;
+}
+
+.market-item {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.vowel-market-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.consonant-market-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;  /* Reduced gap and removed space-between */
+}
+
+.vowel-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.hint-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+    margin-left: 0;
+}
+
+.consonant-tile {
+    padding: 10px 20px;
+    margin-left: 8px;  /* Reduced margin to match new gap */
+    background: #4a90e2;  /* Changed to match submit button color */
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.consonant-tile:hover:not(.disabled) {
+    background: #357abd;  /* Changed to match submit button hover color */
+    transform: translateY(-2px);
+}
+
+.consonant-tile.disabled {
+    background: #E0E0E0;
+    cursor: not-allowed;
+}
+
+/* Toast styles */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 4px;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast.toast-error {
+    background: rgba(244, 67, 54, 0.9);
+}
+
+.toast.toast-success {
+    background: rgba(76, 175, 80, 0.9);
 }

@@ -1,11 +1,39 @@
 {
     "penalties": {
-        "wrongGuess": 2
+        "wrongGuess": 5
+    },
+    "marketplace": {
+        "vowel": {
+            "cost": 10,
+            "description": "Reveal another vowel"
+        },
+        "consonant": {
+            "cost": 15,
+            "description": "Reveal a common consonant"
+        }
     },
     "styles": {
         "foundWord": {
             "color": "#4CAF50",
             "backgroundColor": "#E8F5E9"
+        },
+        "sections": {
+            "paragraph": {
+                "backgroundColor": "#F5F5F5",
+                "borderColor": "#E0E0E0"
+            },
+            "clues": {
+                "backgroundColor": "#E3F2FD",
+                "borderColor": "#BBDEFB"
+            },
+            "marketplace": {
+                "backgroundColor": "#FFF3E0",
+                "borderColor": "#FFE0B2"
+            },
+            "input": {
+                "backgroundColor": "#F3E5F5",
+                "borderColor": "#E1BEE7"
+            }
         }
     }
 }

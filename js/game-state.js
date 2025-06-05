@@ -4,9 +4,76 @@
  * @module game-state
  */
 
-// The single source of truth for game state
+/**
+ * @typedef {Object} GameWord
+ * @property {string} word - The actual word
+ * @property {string} clue - Primary clue for the word
+ * @property {string} [clue2] - Secondary clue for the word
+ * @property {number} points - Points awarded for finding the word
+ * @property {boolean} found - Whether the word has been found
+ * @property {Array<{start: number, end: number}>} positions - Word positions in text
+ */
+
+/**
+ * @typedef {Object} GameParagraph
+ * @property {number} id - Unique identifier
+ * @property {string} text - The paragraph text
+ * @property {Array<GameWord>} hiddenWords - Words to find in the paragraph
+ */
+
+/**
+ * @typedef {Object} MarketplaceVowelConfig
+ * @property {number} cost - Cost to purchase a vowel
+ */
+
+/**
+ * @typedef {Object} MarketplaceConsonantConfig
+ * @property {number} cost - Cost to reveal a consonant
+ */
+
+/**
+ * @typedef {Object} MarketplaceConfig
+ * @property {MarketplaceVowelConfig} vowel - Vowel purchase configuration
+ * @property {MarketplaceConsonantConfig} consonant - Consonant reveal configuration
+ */
+
+/**
+ * @typedef {Object} GamePenalties
+ * @property {number} wrongGuess - Points deducted for wrong guesses
+ */
+
+/**
+ * @typedef {Object} GameParameters
+ * @property {GamePenalties} penalties - Game penalties configuration
+ * @property {MarketplaceConfig} marketplace - Marketplace configuration
+ * @property {Object} styles - UI styling configuration
+ */
+
+/**
+ * @typedef {Object} GameResult
+ * @property {boolean} success - Whether the guess was correct
+ * @property {boolean} gameComplete - Whether all words have been found
+ * @property {number} pointsEarned - Points earned for the guess
+ */
+
+// Interface definitions moved to JSDoc types above
+
+/**
+ * @type {{
+ *   current: {
+ *     paragraph: GameParagraph|null,
+ *     chosenVowel: string,
+ *     words: Array<GameWord>,
+ *     score: number,
+ *     maxScore: number
+ *   },
+ *   config: {
+ *     parameters: GameParameters|null,
+ *     paragraphs: Array<GameParagraph>|null
+ *   }
+ * }}
+ */
 export const gameState = {
-    // Runtime state that changes during gameplay
     current: {
         paragraph: null,    // Currently displayed paragraph
         chosenVowel: '',   // Vowel selected by player for revelation
@@ -14,29 +81,38 @@ export const gameState = {
         score: 0,         // Player's current score
         maxScore: 0       // Maximum achievable score for current paragraph
     },
-    // Static configuration loaded at startup
     config: {
         parameters: null,  // Game rules like penalties
         paragraphs: null  // All available game content
     }
 };
 
+// Marketplace state
+export const marketState = {
+    /** @type {Set<string>} */
+    vowels: new Set(),        // Set of purchased vowels
+    /** @type {Set<string>} */
+    consonants: new Set(),     // Set of purchased consonants
+    /** @type {number} */
+    hints: 0                   // Number of hints purchased
+};
+
 // Getters
 /**
  * Gets the current active paragraph
- * @returns {Object|null} The current paragraph object or null if not set
+ * @returns {GameParagraph|null} The current paragraph object or null if not set
  */
 export function getCurrentParagraph() { return gameState.current.paragraph; }
 
 /**
  * Gets the game parameters including penalties and rules
- * @returns {Object|null} Game parameters object or null if not loaded
+ * @returns {GameParameters|null} Game parameters object or null if not loaded
  */
 export function getGameParameters() { return gameState.config.parameters; }
 
 /**
  * Gets all available paragraphs for the game
- * @returns {Array|null} Array of paragraph objects or null if not loaded
+ * @returns {Array<GameParagraph>|null} Array of paragraph objects or null if not loaded
  */
 export function getAllParagraphs() { return gameState.config.paragraphs; }
 
@@ -48,9 +124,11 @@ export function getChosenVowel() { return gameState.current.chosenVowel; }
 
 /**
  * Gets the list of words for the current paragraph
- * @returns {Array} Array of word objects with their current state
+ * @returns {Array<GameWord>} Array of word objects with their current state
  */
-export function getCurrentWords() { return gameState.current.words; }
+export function getCurrentWords() { 
+    return gameState.current.words || [];
+}
 
 /**
  * Gets the current score of the player
@@ -67,19 +145,19 @@ export function getMaxScore() { return gameState.current.maxScore; }
 // Setters
 /**
  * Sets the current active paragraph
- * @param {Object} paragraph - The paragraph object to set as current
+ * @param {GameParagraph} paragraph - The paragraph object to set as current
  */
 export function setCurrentParagraph(paragraph) { gameState.current.paragraph = paragraph; }
 
 /**
  * Sets the game parameters including rules and penalties
- * @param {Object} params - The parameters object to configure the game
+ * @param {GameParameters} params - The parameters object to configure the game
  */
 export function setGameParameters(params) { gameState.config.parameters = params; }
 
 /**
  * Sets all available paragraphs for the game
- * @param {Array} paragraphs - Array of paragraph objects to be set
+ * @param {Array<GameParagraph>} paragraphs - Array of paragraph objects to be set
  */
 export function setAllParagraphs(paragraphs) { gameState.config.paragraphs = paragraphs; }
 
@@ -91,9 +169,12 @@ export function setVowel(vowel) { gameState.current.chosenVowel = vowel; }
 
 /**
  * Sets the list of words for the current paragraph
- * @param {Array} words - Array of word objects to be set
+ * @param {Array<GameWord>} words - Array of word objects to be set
  */
-export function setCurrentWords(words) { gameState.current.words = words; }
+export function setCurrentWords(words) { 
+    gameState.current.words = words;
+    gameState.current.score = 100; // Start with 100 points
+}
 
 /**
  * Sets the current score of the player
@@ -173,8 +254,144 @@ export function processGuess(guess) {
         return { success: true, wordObj };
     } else {
         // Apply penalty for wrong guess, but don't go below zero
-        gameState.current.score = Math.max(0, 
-            gameState.current.score - gameState.config.parameters.penalties.wrongGuess);
+        const params = getGameParameters();
+        if (params?.penalties?.wrongGuess) {
+            gameState.current.score = Math.max(0, 
+                gameState.current.score - params.penalties.wrongGuess);
+        }
         return { success: false };
     }
+}
+
+/**
+ * Attempts to purchase a vowel from the marketplace
+ * @param {string} vowel - The vowel to purchase
+ * @returns {{success: boolean, cost: number, newScore: number}} Result of the purchase attempt
+ */
+export function purchaseVowel(vowel) {
+    const params = gameState.config.parameters;
+    if (!params) return { success: false, cost: 0, newScore: gameState.current.score };
+    
+    const cost = params.marketplace.vowel.cost;
+    if (gameState.current.score >= cost && !marketState.vowels.has(vowel)) {
+        gameState.current.score -= cost;
+        marketState.vowels.add(vowel);
+        return { success: true, cost, newScore: gameState.current.score };
+    }
+    return { success: false, cost, newScore: gameState.current.score };
+}
+
+/**
+ * Attempts to purchase a consonant hint from the marketplace
+ * @returns {{success: boolean, cost: number, newScore: number, consonant?: string}} Result of the purchase attempt
+ */
+export function purchaseConsonant() {
+    const params = gameState.config.parameters;
+    if (!params) return { success: false, cost: 0, newScore: gameState.current.score };
+    
+    const cost = params.marketplace.consonant.cost;
+    if (gameState.current.score >= cost) {
+        const consonant = findBestConsonant();
+        if (consonant) {
+            gameState.current.score -= cost;
+            marketState.consonants.add(consonant);
+            return { success: true, cost, newScore: gameState.current.score, consonant };
+        }
+    }
+    return { success: false, cost, newScore: gameState.current.score };
+}
+
+/**
+ * Finds the most common consonant in the hidden words that hasn't been revealed
+ * @private
+ * @returns {string|null} The best consonant to reveal or null if none found
+ */
+function findBestConsonant() {
+    const words = getCurrentWords()
+        .filter(w => !w.found)
+        .map(w => w.word.toLowerCase());
+    
+    if (words.length === 0) return null;
+
+    /** @type {{[key: string]: number}} */
+    const consonantCount = {};
+    const consonants = 'bcdfghjklmnpqrstvwxyz'.split('');
+    
+    words.forEach(word => {
+        word.split('').forEach((char) => {
+            if (consonants.includes(char) && !marketState.consonants.has(char)) {
+                consonantCount[char] = (consonantCount[char] || 0) + 1;
+            }
+        });
+    });
+
+    const sorted = Object.entries(consonantCount)
+        .sort(([,a], [,b]) => b - a);
+    return sorted.length > 0 ? sorted[0][0] : null;
+}
+
+/**
+ * Checks if a guess matches any hidden word
+ * @param {string} guess - The player's guess
+ * @returns {GameResult} The result of the guess
+ */
+export function checkGuess(guess) {
+    const normalizedGuess = guess.toLowerCase().trim();
+    const wordObj = getCurrentWords().find(w => 
+        w.word.toLowerCase() === normalizedGuess && !w.found
+    );
+
+    if (wordObj) {
+        wordObj.found = true;
+        gameState.current.score += wordObj.points;
+        
+        const allFound = getCurrentWords().every(w => w.found);
+        return {
+            success: true,
+            gameComplete: allFound,
+            pointsEarned: wordObj.points
+        };
+    }
+
+    // Wrong guess penalty
+    const params = getGameParameters();
+    if (params?.penalties?.wrongGuess) {
+        gameState.current.score = Math.max(0, 
+            gameState.current.score - params.penalties.wrongGuess);
+    }
+
+    return {
+        success: false,
+        gameComplete: false,
+        pointsEarned: 0
+    };
+}
+
+/**
+ * Masks a word, optionally revealing a vowel and purchased letters
+ * @param {string} word - The word to mask
+ * @param {string} [vowel=''] - The vowel to reveal
+ * @returns {string} The masked word
+ */
+export function maskWordWithPurchases(word, vowel = '') {
+    return word
+        .split('')
+        .map(char => {
+            const lowerChar = char.toLowerCase();
+            // Show the specified vowel if it matches
+            if (vowel && lowerChar === vowel.toLowerCase()) {
+                return char;
+            }
+            // Show purchased consonants
+            if (marketState.consonants.has(lowerChar)) {
+                return char;
+            }
+            // Show purchased vowels
+            if (marketState.vowels.has(lowerChar)) {
+                return char;
+            }
+            // Mask everything else
+            return '_';
+        })
+        .join('');
 }

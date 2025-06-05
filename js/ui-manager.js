@@ -4,19 +4,39 @@
  * @module ui-manager
  */
 
+/**
+ * @typedef {import('./game-state.js').GameWord} GameWord
+ * @typedef {import('./game-state.js').GameParagraph} GameParagraph
+ */
+
 import { 
     getCurrentParagraph,
     getCurrentWords,
     getCurrentScore,
     getMaxScore,
-    maskWord
+    maskWord,
+    maskWordWithPurchases,
+    getChosenVowel,
+    purchaseVowel,
+    purchaseConsonant
 } from './game-state.js';
+
+/**
+ * Updates the DOM element if it exists
+ * @param {string} id - Element ID
+ * @param {(element: HTMLElement) => void} updater - Function to update the element
+ */
+function updateElement(id, updater) {
+    const element = document.getElementById(id);
+    if (element) updater(element);
+}
 
 /**
  * Renders the paragraph with masked words
  * @param {string} vowel - The vowel to reveal in masked words
  */
 export function renderParagraph(vowel) {
+    /** @type {GameParagraph|null} */
     const currentParagraph = getCurrentParagraph();
     if (!currentParagraph) return;
     
@@ -24,7 +44,7 @@ export function renderParagraph(vowel) {
     // Sort from end to start to avoid index shifting during replacement
     const allReplacements = getCurrentWords()
         .flatMap(word => 
-            word.positions.map(pos => ({
+            word.positions.map((pos) => ({
                 ...pos,
                 word: word.word,
                 found: word.found
@@ -40,7 +60,7 @@ export function renderParagraph(vowel) {
         // Use different styling for found vs masked words
         const maskedWord = found 
             ? `<span data-masked="true" class="found">${wordToReplace}</span>`
-            : `<span data-masked="true">${maskWord(wordToReplace, vowel)}</span>`;
+            : `<span data-masked="true">${maskWordWithPurchases(wordToReplace, vowel)}</span>`;
         
         maskedParagraph = 
             maskedParagraph.substring(0, start) + 
@@ -48,7 +68,8 @@ export function renderParagraph(vowel) {
             maskedParagraph.substring(end);
     });
     
-    document.getElementById('paragraph-container').innerHTML = maskedParagraph;
+    updateElement('paragraph-container', 
+        (el) => { el.innerHTML = maskedParagraph; });
 }
 
 /**
@@ -56,6 +77,8 @@ export function renderParagraph(vowel) {
  */
 export function renderClues() {
     const cluesList = document.getElementById('clues-list');
+    if (!cluesList) return;
+    
     cluesList.innerHTML = '';
     
     getCurrentWords().forEach(({ clue, word, found }, idx) => {
@@ -70,19 +93,23 @@ export function renderClues() {
  * Updates the score display
  */
 export function updateScore() {
-    document.getElementById('score-value').textContent = getCurrentScore();
+    updateElement('score-value', 
+        (el) => el.textContent = getCurrentScore().toString());
 }
 
 /**
  * Displays the game over message with final score
  */
-export function showGameOver() {    const score = getCurrentScore();
+export function showGameOver() {
+    const score = getCurrentScore();
     const maxScore = getMaxScore();
     const scorePercentage = Math.round((score / maxScore) * 100);
     
     const input = document.getElementById('guess-input');
-    input.disabled = true;
-    input.placeholder = 'Game Complete!';
+    if (input && input instanceof HTMLInputElement) {
+        input.disabled = true;
+        input.placeholder = 'Game Complete!';
+    }
     
     const endGameMessage = document.createElement('div');
     endGameMessage.className = 'game-over-message';
@@ -92,37 +119,38 @@ export function showGameOver() {    const score = getCurrentScore();
         <p>Final Score: ${score}/${maxScore} (${scorePercentage}%)</p>
     `;
     
-    document.getElementById('paragraph-container').insertAdjacentElement('afterend', endGameMessage);
+    updateElement('paragraph-container', 
+        (el) => el.insertAdjacentElement('afterend', endGameMessage));
 }
 
 /**
  * Sets up and returns vowel selection buttons
- * @returns {NodeList} Collection of vowel button elements
+ * @returns {NodeListOf<Element>} Collection of vowel button elements
  */
 export function setupVowelButtons() {
-    const vowelButtons = document.querySelectorAll('.vowel-tile');
-    return vowelButtons;
+    return document.querySelectorAll('.vowel-tile');
 }
 
 /**
  * Disables all vowel selection buttons
  */
 export function disableVowelButtons() {
-    const vowelButtons = document.querySelectorAll('.vowel-tile');
-    vowelButtons.forEach(btn => btn.classList.add('disabled'));
+    document.querySelectorAll('.vowel-tile')
+        .forEach(btn => btn.classList.add('disabled'));
 }
 
 /**
  * Resets the UI to its initial state
- * Clears game over message, resets buttons and input field
  */
 export function resetUI() {
-    const vowelButtons = document.querySelectorAll('.vowel-tile');
-    vowelButtons.forEach(btn => btn.classList.remove('disabled'));
+    document.querySelectorAll('.vowel-tile')
+        .forEach(btn => btn.classList.remove('disabled'));
     
     const input = document.getElementById('guess-input');
-    input.disabled = false;
-    input.placeholder = 'Enter your guess...';
+    if (input && input instanceof HTMLInputElement) {
+        input.disabled = false;
+        input.placeholder = 'Enter your guess...';
+    }
     
     const existingMessage = document.querySelector('.game-over-message');
     if (existingMessage) {
@@ -130,4 +158,65 @@ export function resetUI() {
     }
     
     updateScore();
+}
+
+/**
+ * Sets up marketplace interactions
+ */
+export function setupMarketplace() {
+    // Set up vowel purchase buttons
+    const vowelButtons = document.querySelectorAll('.vowel-tile');
+    vowelButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const vowel = button.getAttribute('data-vowel');
+            if (!vowel) return;
+            
+            const result = purchaseVowel(vowel);
+            if (result.success) {
+                button.classList.add('disabled');
+                renderParagraph(getChosenVowel());
+                updateScore();
+                showToast(`Vowel '${vowel.toUpperCase()}' purchased for ${result.cost} points!`);
+            } else {
+                showToast(`Not enough points to buy vowel (Cost: ${result.cost})`, 'error');
+            }
+        });
+    });
+
+    // Set up consonant purchase button
+    const consonantButton = document.querySelector('.consonant-tile');
+    if (consonantButton) {
+        consonantButton.addEventListener('click', () => {
+            const result = purchaseConsonant();
+            if (result.success && result.consonant) {
+                renderParagraph(getChosenVowel());
+                updateScore();
+                showToast(`Common consonant '${result.consonant.toUpperCase()}' revealed for ${result.cost} points!`);
+            } else {
+                showToast(`Not enough points to reveal a consonant (Cost: ${result.cost})`, 'error');
+            }
+        });
+    }
+}
+
+/**
+ * Shows a toast message to the user
+ * @param {string} message - Message to display
+ * @param {'success'|'error'} [type='success'] - Type of toast
+ */
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after animation
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
