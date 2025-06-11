@@ -4,14 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parasight - Word Guessing Game</title>
+    <title>ClueChain - Word Guessing Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <main class="container">
-        <h1>ParaSight</h1>
-        <div class="game-layout">            <!-- Top row -->
+        <div class="game-header">
+            <div class="header-content">
+                <div class="left-icon">
+                    <button class="icon-button" id="settings-button">
+                        <span class="icon">⚙️</span>
+                    </button>
+                </div>
+                <div class="title-container">
+                    <h1>ClueChain</h1>
+                    <div class="date-display">
+                        <span class="arrow">←</span>
+                        <span id="current-date">January 1, 2025</span>
+                        <span class="arrow">→</span>
+                    </div>
+                </div>
+                <div class="right-icon">
+                    <button class="icon-button" id="help-button">
+                        <span class="icon">❓</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="game-layout"> <!-- Top row -->
             <section id="paragraph-section" class="section">
                 <div id="paragraph-container"></div>
             </section>
@@ -20,7 +41,7 @@
                 <div id="clues-container">
                     <ul id="clues-list"></ul>
                 </div>
-            </section>            <!-- Input row -->
+            </section> <!-- Input row -->
             <section id="input-section" class="section">
                 <div class="input-container">
                     <input type="text" id="guess-input" placeholder="Enter your guess...">
@@ -32,7 +53,8 @@
             <!-- Bottom row -->
             <section id="marketplace-section" class="section">
                 <div class="marketplace-items">
-                    <div class="market-item">                        <div class="letter-grid-container">
+                    <div class="market-item">
+                        <div class="letter-grid-container">
                             <div class="letter-grid">
                                 <div class="keyboard-row">
                                     <button class="letter-tile" data-letter="q">Q<span class="count"></span></button>
@@ -70,7 +92,8 @@
                         </div>
                     </div>
                 </div>
-            </section>        </div>
+            </section>
+        </div>
         </section>
     </main>
     <script type="module" src="main.js"></script>

@@ -332,7 +332,6 @@ export function purchaseConsonant(consonant) {
   const params = gameState.config.parameters;
   if (!params)
     return { success: false, cost: 0, newScore: gameState.current.score };
-
   const cost = params.marketplace.consonant.cost;
   // Check if it's a valid consonant and not already purchased
   const isConsonant = "bcdfghjklmnpqrstvwxyz".includes(consonant.toLowerCase());
