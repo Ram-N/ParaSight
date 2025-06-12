@@ -54,15 +54,20 @@ export function renderParagraph(vowel) {
     )
     .sort((a, b) => b.start - a.start);
 
-  let maskedParagraph = currentParagraph.text;
+  let maskedParagraph = currentParagraph.text; // Create word to index mapping first
+  const wordToIndexMap = new Map();
+  getCurrentWords().forEach((gameWord, idx) => {
+    wordToIndexMap.set(gameWord.word.toLowerCase(), idx);
+  });
 
   // Replace words one by one, starting from the end
   allReplacements.forEach(({ start, end, word, found }) => {
     const wordToReplace = maskedParagraph.substring(start, end);
+    const wordIndex = wordToIndexMap.get(word.toLowerCase());
     // Use different styling for found vs masked words
     const maskedWord = found
-      ? `<span data-masked="true" class="found">${wordToReplace}</span>`
-      : `<span data-masked="true">${maskWordWithPurchases(
+      ? `<span data-masked="true" data-clue-index="${wordIndex}" class="found">${wordToReplace}</span>`
+      : `<span data-masked="true" data-clue-index="${wordIndex}">${maskWordWithPurchases(
           wordToReplace,
           vowel
         )}</span>`;
@@ -79,6 +84,93 @@ export function renderParagraph(vowel) {
 }
 
 /**
+ * Sets up hover interactions between clues and masked words
+ */
+function setupClueInteractions() {
+  const cluesList = document.getElementById("clues-list");
+  if (!cluesList) return;
+
+  // Set up indices on clues
+  const clues = Array.from(cluesList.getElementsByTagName("li"));
+  clues.forEach((clue, index) => {
+    clue.setAttribute("data-clue-index", String(index));
+  });
+
+  /**
+   * Helper function to highlight corresponding elements
+   * @param {string} clueIndex - The index of the clue/word pair to highlight
+   * @param {boolean} highlight - Whether to add or remove highlight
+   */
+  const highlightPair = (clueIndex, highlight) => {
+    // Find the clue and all instances of its word
+    const clue = document.querySelector(
+      `#clues-list li[data-clue-index="${clueIndex}"]`
+    );
+    const wordInstances = document.querySelectorAll(
+      `[data-masked="true"][data-clue-index="${clueIndex}"]`
+    );
+
+    if (clue && wordInstances.length > 0) {
+      // Remove any existing highlights
+      if (highlight) {
+        document
+          .querySelectorAll(".highlight")
+          .forEach((el) => el.classList.remove("highlight"));
+      }
+
+      // Add highlight to both the clue and all word instances
+      requestAnimationFrame(() => {
+        clue.classList.toggle("highlight", highlight);
+        wordInstances.forEach((word) =>
+          word.classList.toggle("highlight", highlight)
+        );
+      });
+    }
+  };
+
+  // Set up hover effects on clues
+  clues.forEach((clue) => {
+    const clueIndex = clue.getAttribute("data-clue-index");
+    if (clueIndex) {
+      clue.addEventListener("mouseenter", () => highlightPair(clueIndex, true));
+      clue.addEventListener("mouseleave", () =>
+        highlightPair(clueIndex, false)
+      );
+
+      clue.addEventListener("click", () => {
+        const firstWord = document.querySelector(
+          `[data-masked="true"][data-clue-index="${clueIndex}"]`
+        );
+        if (firstWord) {
+          firstWord.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+    }
+  });
+
+  // Set up hover effects on words
+  const maskedWords = document.querySelectorAll('[data-masked="true"]');
+  maskedWords.forEach((word) => {
+    const clueIndex = word.getAttribute("data-clue-index");
+    if (clueIndex) {
+      word.addEventListener("mouseenter", () => highlightPair(clueIndex, true));
+      word.addEventListener("mouseleave", () =>
+        highlightPair(clueIndex, false)
+      );
+
+      word.addEventListener("click", () => {
+        const clue = document.querySelector(
+          `#clues-list li[data-clue-index="${clueIndex}"]`
+        );
+        if (clue) {
+          clue.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+    }
+  });
+}
+
+/**
  * Renders the clues list for hidden words
  */
 export function renderClues() {
@@ -87,14 +179,15 @@ export function renderClues() {
 
   cluesList.innerHTML = "";
 
-  getCurrentWords().forEach(({ clue, word, found }, idx) => {
+  getCurrentWords().forEach(({ clue, word, found }) => {
     const li = document.createElement("li");
-    li.innerHTML = `${idx + 1}. ${clue} (${word.length} letters) ${
-      found ? "✓" : ""
-    }`;
+    li.innerHTML = `${clue} (${word.length} letters) ${found ? "✓" : ""}`;
     if (found) li.classList.add("found");
     cluesList.appendChild(li);
   });
+
+  // Set up hover interactions after rendering clues
+  setupClueInteractions();
 }
 
 /**
@@ -271,6 +364,7 @@ export function setupMarketplace() {
         if (result.success) {
           button.classList.add("purchased");
           renderParagraph(getChosenVowel());
+          setupClueInteractions(); // Re-attach event listeners after rendering
           updateScore();
           updateLetterCounts();
           showToast(
@@ -289,6 +383,7 @@ export function setupMarketplace() {
         if (result.success && result.consonant) {
           button.classList.add("purchased");
           renderParagraph(getChosenVowel());
+          setupClueInteractions(); // Re-attach event listeners after rendering
           updateScore();
           updateLetterCounts();
           showToast(
