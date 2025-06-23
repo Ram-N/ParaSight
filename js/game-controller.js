@@ -170,10 +170,36 @@ export async function initializeGame() {
     setGameParameters(params);
     setAllParagraphs(gameData.paragraphs);
 
-    // Set up random paragraph
-    const randomIndex = Math.floor(Math.random() * gameData.paragraphs.length);
-    /** @type {typeof gameData.paragraphs[0]} */
-    const selectedParagraph = gameData.paragraphs[randomIndex];
+    // Get the current date from the date element
+    const dateElement = document.getElementById("current-date");
+    const currentDateStr = dateElement ? dateElement.textContent : null;
+    let selectedParagraph = null;
+    
+    if (currentDateStr) {
+      // Format date for comparison (YYYY-MM-DD)
+      const currentDate = new Date(currentDateStr);
+      const formattedDate = currentDate.toISOString().split('T')[0];
+      
+      // Find paragraph matching the current date
+      selectedParagraph = gameData.paragraphs.find(
+        paragraph => paragraph.date && 
+        new Date(paragraph.date).toISOString().split('T')[0] === formattedDate
+      );
+      
+      console.log(`Looking for paragraph with date: ${formattedDate}`);
+      if (selectedParagraph) {
+        console.log(`Found matching paragraph for date: ${formattedDate}`);
+      } else {
+        console.log(`No paragraph found for date: ${formattedDate}, selecting random paragraph`);
+      }
+    }
+    
+    // If no paragraph found for the current date, pick a random one
+    if (!selectedParagraph) {
+      const randomIndex = Math.floor(Math.random() * gameData.paragraphs.length);
+      /** @type {typeof gameData.paragraphs[0]} */
+      selectedParagraph = gameData.paragraphs[randomIndex];
+    }
     if (!selectedParagraph || !Array.isArray(selectedParagraph.hiddenWords)) {
       throw new Error("Invalid paragraph data structure");
     } // Initialize game state in the correct order

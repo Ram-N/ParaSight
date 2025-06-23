@@ -97,3 +97,4 @@ The `game_parameters.json` file configures:
 - Scoring system
 - Penalties for wrong guesses
 - Game rules and settings
+

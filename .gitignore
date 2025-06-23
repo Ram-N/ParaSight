@@ -30,3 +30,9 @@ Thumbs.db
 # Build output
 dist/
 build/
+
+#Dev notes
+docs
+
+#CLAUDE
+CLAUDE.md

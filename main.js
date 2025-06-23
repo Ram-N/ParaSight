@@ -3,6 +3,17 @@ import { initializeGame } from "./js/game-controller.js";
 
 // Initialize the game when the window loads
 window.onload = () => {
+  // Set the date display to today's date on page load
+  const dateElementInit = document.getElementById("current-date");
+  if (dateElementInit) {
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    // Fix: use correct type for year/month/day
+    dateElementInit.textContent = today.toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+
   // First initialize the game
   initializeGame();
 
@@ -45,6 +56,184 @@ window.onload = () => {
     }
   }
   updateDateDisplay(currentDate);
+  
+  // Set up custom calendar
+  const calendarButton = document.getElementById("calendar-button");
+  const dateSelector = document.querySelector(".date-selector");
+  const customCalendar = document.getElementById("custom-calendar");
+  const monthYearDisplay = document.getElementById("month-year");
+  const prevMonthBtn = document.getElementById("prev-month");
+  const nextMonthBtn = document.getElementById("next-month");
+  const calendarDaysContainer = document.getElementById("calendar-days");
+  
+  // Calendar state variables
+  let calendarCurrentDate = new Date(currentDate);
+  let calendarCurrentMonth = calendarCurrentDate.getMonth();
+  let calendarCurrentYear = calendarCurrentDate.getFullYear();
+  
+  // Days with content - we'll fetch this from our data later
+  const daysWithContent = [];
+  
+  // Fetch the paragraphs to find dates with content
+  async function fetchContentDates() {
+    try {
+      const response = await fetch("./paras.json");
+      const data = await response.json();
+      
+      if (data && Array.isArray(data.paragraphs)) {
+        // Extract dates from paragraphs
+        data.paragraphs.forEach(paragraph => {
+          if (paragraph.date) {
+            daysWithContent.push(new Date(paragraph.date).toISOString().split('T')[0]);
+          }
+        });
+        
+        // Update calendar to show days with content
+        if (customCalendar.classList.contains("show")) {
+          renderCalendarDays();
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching content dates:", error);
+    }
+  }
+  
+  // Function to generate and render calendar days
+  function renderCalendarDays() {
+    calendarDaysContainer.innerHTML = "";
+    
+    // Update month and year display
+    monthYearDisplay.textContent = new Date(calendarCurrentYear, calendarCurrentMonth, 1)
+      .toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    
+    // Get the first day of the month
+    const firstDay = new Date(calendarCurrentYear, calendarCurrentMonth, 1);
+    const startingDay = firstDay.getDay(); // 0 (Sunday) to 6 (Saturday)
+    
+    // Get the last day of the month
+    const lastDay = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0);
+    const totalDays = lastDay.getDate();
+    
+    // Create empty cells for days before the first day of month
+    for (let i = 0; i < startingDay; i++) {
+      const emptyDay = document.createElement("div");
+      emptyDay.className = "calendar-day empty";
+      calendarDaysContainer.appendChild(emptyDay);
+    }
+    
+    // Format current selected date for comparison
+    const selectedDateStr = currentDate.toISOString().split('T')[0];
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    
+    // Create cells for all days of the month
+    for (let day = 1; day <= totalDays; day++) {
+      const dayElement = document.createElement("div");
+      dayElement.className = "calendar-day";
+      dayElement.textContent = day;
+      
+      // Format this calendar day as YYYY-MM-DD for comparison
+      const thisDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+      const thisDateStr = thisDate.toISOString().split('T')[0];
+      
+      // Add special classes
+      if (thisDateStr === selectedDateStr) {
+        dayElement.classList.add("selected");
+      }
+      
+      if (thisDateStr === todayDateStr) {
+        dayElement.classList.add("today");
+      }
+      
+      // Mark days that have content
+      if (daysWithContent.includes(thisDateStr)) {
+        dayElement.classList.add("has-content");
+      }
+      
+      // Add click handler to select date
+      dayElement.addEventListener("click", () => {
+        // Update current date and display
+        currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+        updateDateDisplay(currentDate);
+        
+        // Hide calendar
+        customCalendar.classList.remove("show");
+        
+        // Reinitialize game with new date
+        initializeGame();
+      });
+      
+      calendarDaysContainer.appendChild(dayElement);
+    }
+  }
+  
+  // Function to show/hide calendar
+  function toggleCalendar() {
+    const isVisible = customCalendar.classList.toggle("show");
+    
+    if (isVisible) {
+      // Set calendar to current month/year and render days
+      calendarCurrentMonth = currentDate.getMonth();
+      calendarCurrentYear = currentDate.getFullYear();
+      renderCalendarDays();
+      
+      // Fetch content dates if we haven't already
+      if (daysWithContent.length === 0) {
+        fetchContentDates();
+      }
+      
+      // Add click outside to close
+      setTimeout(() => {
+        document.addEventListener("click", closeCalendarOnClickOutside);
+      }, 10);
+    }
+  }
+  
+  // Function to close calendar when clicking outside
+  function closeCalendarOnClickOutside(e) {
+    if (!customCalendar.contains(e.target) && 
+        !dateSelector.contains(e.target)) {
+      customCalendar.classList.remove("show");
+      document.removeEventListener("click", closeCalendarOnClickOutside);
+    }
+  }
+  
+  // Set up event listeners for the calendar
+  if (dateSelector && customCalendar) {
+    // Toggle calendar on date or button click
+    dateSelector.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleCalendar();
+    });
+    
+    // Navigate to previous month
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        calendarCurrentMonth--;
+        if (calendarCurrentMonth < 0) {
+          calendarCurrentMonth = 11;
+          calendarCurrentYear--;
+        }
+        renderCalendarDays();
+      });
+    }
+    
+    // Navigate to next month
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        calendarCurrentMonth++;
+        if (calendarCurrentMonth > 11) {
+          calendarCurrentMonth = 0;
+          calendarCurrentYear++;
+        }
+        renderCalendarDays();
+      });
+    }
+    
+    // Initialize content dates
+    fetchContentDates();
+  }
 
   // Add date navigation handlers
   arrows.forEach((arrow) => {
@@ -60,6 +249,12 @@ window.onload = () => {
 
       currentDate = newDate;
       updateDateDisplay(currentDate);
+      
+      // Update date picker value to match
+      if (datePicker) {
+        datePicker.value = newDate.toISOString().split('T')[0];
+      }
+      
       // Reinitialize game with new date
       initializeGame();
     });
