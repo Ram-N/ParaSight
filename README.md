@@ -1,6 +1,6 @@
 # ClueChain - Word Guessing Game
 
-A unique word guessing game where players reveal hidden words in paragraphs by solving clues which are progressively revealed.
+A unique word guessing game where players reveal hidden words in paragraphs by solving clues which are progressively revealed. The game starts by showing only 3 random clues, and gradually reveals more clues after each guess attempt.
 
 ## Project Structure
 
@@ -33,6 +33,9 @@ gameState = {
     words: [], // Hidden words with their states
     score: 0, // Current game score
     maxScore: 0, // Maximum possible score
+    clueAttempts: 0, // Number of answer attempts made
+    initialCluesShown: 3, // Number of clues to show initially
+    shownWordIndices: [], // Indices of words with visible clues
   },
   config: {
     parameters: null, // Game rules and penalties
@@ -43,7 +46,7 @@ gameState = {
 
 State is accessed through getter/setter functions to maintain encapsulation:
 
-- Getters: `getCurrentParagraph`, `getGameParameters`, `getAllParagraphs`, etc.
+- Getters: `getCurrentParagraph`, `getGameParameters`, `getAllParagraphs`, `getClueAttempts`, `getShownWordIndices`, etc.
 - Setters: `setCurrentParagraph`, `setGameParameters`, `setAllParagraphs`, etc.
 
 ### Game Controller (`game-controller.js`)
@@ -68,16 +71,19 @@ Manages all DOM interactions and UI updates:
 
 1. `main.js` initializes the game on window load
 2. Game data is loaded from JSON files
-3. Player selects a vowel to reveal in hidden words
-4. Player guesses words based on clues
-5. Score updates based on correct/incorrect guesses
-6. Game ends when all words are found
+3. Game randomly selects 3 clues to show initially
+4. Player selects a vowel to reveal in hidden words
+5. Player guesses words based on clues
+6. After each guess (right or wrong), one more clue is revealed
+7. Score updates based on correct/incorrect guesses
+8. Game ends when all words are found
 
 ## Key Features
 
 - Random paragraph selection
 - Vowel-based word masking
 - Points system with penalties
+- Progressive clue revealing (starting with 3 random clues)
 - Crossword-style clues
 - Visual feedback for guesses
 - End-game statistics
@@ -97,4 +103,14 @@ The `game_parameters.json` file configures:
 - Scoring system
 - Penalties for wrong guesses
 - Game rules and settings
+
+## Progressive Clue Revealing
+
+The game implements a progressive clue-revealing system:
+
+1. Initially, only 3 random clues are shown to the player
+2. After each guess attempt (whether correct or incorrect), one additional random clue is revealed
+3. This continues until all clues are visible or all words are found
+
+This mechanic creates a gradually easier experience as the player progresses through the game, maintaining engagement while reducing difficulty over time.
 

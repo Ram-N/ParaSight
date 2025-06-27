@@ -123,6 +123,8 @@ function setupGuessInput() {
     } else {
       input.classList.add("wrong");
       setTimeout(() => input.classList.remove("wrong"), 1000);
+      // Even for wrong guesses, we need to re-render clues to show newly revealed ones
+      renderClues();
       updateScore();
     }
 

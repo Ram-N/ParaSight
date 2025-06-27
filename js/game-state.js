@@ -12,6 +12,7 @@
  * @property {number} points - Points awarded for finding the word
  * @property {boolean} found - Whether the word has been found
  * @property {Array<{start: number, end: number}>} positions - Word positions in text
+ * @property {number} visibleClues - Number of clues currently visible for the word
  */
 
 /**
@@ -19,6 +20,7 @@
  * @property {number} id - Unique identifier
  * @property {string} text - The paragraph text
  * @property {Array<GameWord>} hiddenWords - Words to find in the paragraph
+ * @property {string} [title] - Optional title for the paragraph
  */
 
 /**
@@ -84,6 +86,9 @@ export const gameState = {
     words: [], // Array of word objects with found status
     score: 0, // Player's current score
     maxScore: 0, // Maximum achievable score for current paragraph
+    clueAttempts: 0, // Number of answer attempts made
+    initialCluesShown: 3, // Number of clues to show initially
+    shownWordIndices: [], // Indices of words with visible clues
   },
   config: {
     parameters: null, // Game rules like penalties
@@ -148,6 +153,30 @@ export function getCurrentWords() {
 }
 
 /**
+ * Gets the number of attempts made so far
+ * @returns {number} The number of attempts
+ */
+export function getClueAttempts() {
+  return gameState.current.clueAttempts;
+}
+
+/**
+ * Gets the number of initial clues shown
+ * @returns {number} Number of initial clues
+ */
+export function getInitialCluesShown() {
+  return gameState.current.initialCluesShown;
+}
+
+/**
+ * Gets the indices of words with visible clues
+ * @returns {number[]} Array of word indices
+ */
+export function getShownWordIndices() {
+  return gameState.current.shownWordIndices;
+}
+
+/**
  * Gets the current score of the player
  * @returns {number} The current score
  */
@@ -201,8 +230,33 @@ export function setVowel(vowel) {
  * @param {Array<GameWord>} words - Array of word objects to be set
  */
 export function setCurrentWords(words) {
-  gameState.current.words = words;
+  // Initialize each word with visibleClues = 0
+  gameState.current.words = words.map(word => ({
+    ...word,
+    visibleClues: 0
+  }));
+  
+  // Get indices of unfound words
+  const unfoundIndices = words.map((_, index) => index);
+  
+  // Randomly select initialCluesShown indices for initial display
+  const initialCount = Math.min(gameState.current.initialCluesShown, unfoundIndices.length);
+  gameState.current.shownWordIndices = [];
+  
+  // Shuffle the unfound indices to pick random words
+  for (let i = unfoundIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unfoundIndices[i], unfoundIndices[j]] = [unfoundIndices[j], unfoundIndices[i]];
+  }
+  
+  // Set the initial visible clues
+  for (let i = 0; i < initialCount; i++) {
+    const wordIndex = unfoundIndices[i];
+    gameState.current.shownWordIndices.push(wordIndex);
+  }
+  
   gameState.current.score = 100; // Start with 100 points
+  gameState.current.clueAttempts = 0; // Reset attempt counter
   initializeLetterCounts();
 }
 
@@ -391,6 +445,26 @@ export function checkGuess(guess) {
   const wordObj = getCurrentWords().find(
     (w) => w.word.toLowerCase() === normalizedGuess && !w.found
   );
+
+  // Increment attempt counter for progressive clue revealing
+  gameState.current.clueAttempts++;
+  
+  // After each attempt, reveal one more clue if there are any unfound words
+  const unfoundIndices = getCurrentWords()
+    .map((word, index) => word.found ? -1 : index)
+    .filter(index => index !== -1 && !gameState.current.shownWordIndices.includes(index));
+  
+  // If there are still hidden clues to reveal
+  if (unfoundIndices.length > 0) {
+    // Choose a random word to reveal
+    const randomIndex = Math.floor(Math.random() * unfoundIndices.length);
+    const wordIndexToReveal = unfoundIndices[randomIndex];
+    
+    // Add this word to the visible clues list
+    if (wordIndexToReveal !== undefined && !gameState.current.shownWordIndices.includes(wordIndexToReveal)) {
+      gameState.current.shownWordIndices.push(wordIndexToReveal);
+    }
+  }
 
   if (wordObj) {
     wordObj.found = true;

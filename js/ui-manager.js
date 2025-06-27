@@ -21,6 +21,9 @@ import {
   purchaseConsonant,
   getLetterCounts,
   marketState,
+  getInitialCluesShown,
+  getClueAttempts,
+  getShownWordIndices,
 } from "./game-state.js";
 
 /**
@@ -78,8 +81,19 @@ export function renderParagraph(vowel) {
       maskedParagraph.substring(end);
   });
 
+  // Add title if it exists
+  let html = "";
+  if (currentParagraph.title) {
+    if (currentParagraph.title.length > 40) {
+      html += `<div class=\"paragraph-title-small\">${currentParagraph.title}</div>`;
+    } else {
+      html += `<h2 class=\"paragraph-title\">${currentParagraph.title}</h2>`;
+    }
+  }
+  html += maskedParagraph;
+
   updateElement("paragraph-container", (el) => {
-    el.innerHTML = maskedParagraph;
+    el.innerHTML = html;
   });
 }
 
@@ -90,11 +104,8 @@ function setupClueInteractions() {
   const cluesList = document.getElementById("clues-list");
   if (!cluesList) return;
 
-  // Set up indices on clues
-  const clues = Array.from(cluesList.getElementsByTagName("li"));
-  clues.forEach((clue, index) => {
-    clue.setAttribute("data-clue-index", String(index));
-  });
+  // Get all visible clues
+  const visibleClues = Array.from(cluesList.getElementsByTagName("li"));
 
   /**
    * Helper function to highlight corresponding elements
@@ -106,9 +117,13 @@ function setupClueInteractions() {
     const clue = document.querySelector(
       `#clues-list li[data-clue-index="${clueIndex}"]`
     );
-    const wordInstances = document.querySelectorAll(
-      `[data-masked="true"][data-clue-index="${clueIndex}"]`
-    );
+    // Get the word index from the clue
+    const wordIndex = clue ? clue.getAttribute("data-word-index") : null;
+    
+    // Find all instances of the word using the word index instead of clue index
+    const wordInstances = wordIndex ? document.querySelectorAll(
+      `[data-masked="true"][data-clue-index="${wordIndex}"]`
+    ) : [];
 
     if (clue && wordInstances.length > 0) {
       // Remove any existing highlights
@@ -129,9 +144,11 @@ function setupClueInteractions() {
   };
 
   // Set up hover effects on clues
-  clues.forEach((clue) => {
+  visibleClues.forEach((clue) => {
     const clueIndex = clue.getAttribute("data-clue-index");
-    if (clueIndex) {
+    const wordIndex = clue.getAttribute("data-word-index");
+    
+    if (clueIndex && wordIndex) {
       clue.addEventListener("mouseenter", () => highlightPair(clueIndex, true));
       clue.addEventListener("mouseleave", () =>
         highlightPair(clueIndex, false)
@@ -139,7 +156,7 @@ function setupClueInteractions() {
 
       clue.addEventListener("click", () => {
         const firstWord = document.querySelector(
-          `[data-masked="true"][data-clue-index="${clueIndex}"]`
+          `[data-masked="true"][data-clue-index="${wordIndex}"]`
         );
         if (firstWord) {
           firstWord.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -151,27 +168,34 @@ function setupClueInteractions() {
   // Set up hover effects on words
   const maskedWords = document.querySelectorAll('[data-masked="true"]');
   maskedWords.forEach((word) => {
-    const clueIndex = word.getAttribute("data-clue-index");
-    if (clueIndex) {
-      word.addEventListener("mouseenter", () => highlightPair(clueIndex, true));
-      word.addEventListener("mouseleave", () =>
-        highlightPair(clueIndex, false)
+    const wordIndex = word.getAttribute("data-clue-index");
+    
+    if (wordIndex) {
+      // Find the corresponding clue (if it's visible)
+      const clue = document.querySelector(
+        `#clues-list li[data-word-index="${wordIndex}"]`
       );
-
-      word.addEventListener("click", () => {
-        const clue = document.querySelector(
-          `#clues-list li[data-clue-index="${clueIndex}"]`
+      
+      if (clue) {
+        const clueIndex = clue.getAttribute("data-clue-index");
+        
+        word.addEventListener("mouseenter", () => highlightPair(clueIndex, true));
+        word.addEventListener("mouseleave", () =>
+          highlightPair(clueIndex, false)
         );
-        if (clue) {
-          clue.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      });
+
+        word.addEventListener("click", () => {
+          if (clue) {
+            clue.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+      }
     }
   });
 }
 
 /**
- * Renders the clues list for hidden words
+ * Renders the clues list for hidden words with progressive revealing
  */
 export function renderClues() {
   const cluesList = document.getElementById("clues-list");
@@ -179,11 +203,35 @@ export function renderClues() {
 
   cluesList.innerHTML = "";
 
-  getCurrentWords().forEach(({ clue, word, found }) => {
-    const li = document.createElement("li");
-    li.innerHTML = `${clue} (${word.length} letters) ${found ? "✓" : ""}`;
-    if (found) li.classList.add("found");
-    cluesList.appendChild(li);
+  // Get visible clues based on attempts made
+  const words = getCurrentWords();
+  let clueIndex = 0;
+  
+  // Get indices of words whose clues should be shown
+  const shownWordIndices = getShownWordIndices();
+  
+  // Display clues for each word
+  words.forEach((gameWord, wordIndex) => {
+    const { clue, word, found } = gameWord;
+    
+    // Show clue if the word is found OR if it's in the list of shown word indices
+    const shouldShowClue = found || shownWordIndices.includes(wordIndex);
+    
+    if (shouldShowClue) {
+      const li = document.createElement("li");
+      li.innerHTML = `${clue} (${word.length} letters) ${found ? "✓" : ""}`;
+      if (found) li.classList.add("found");
+      
+      // Add data attributes for tracking
+      li.setAttribute("data-visible", "true");
+      li.setAttribute("data-word-index", wordIndex);
+      li.setAttribute("data-clue-index", clueIndex);
+      
+      cluesList.appendChild(li);
+      clueIndex++;
+      
+      // No need to track clues shown anymore
+    }
   });
 
   // Set up hover interactions after rendering clues
