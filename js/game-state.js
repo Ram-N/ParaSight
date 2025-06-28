@@ -11,6 +11,7 @@
  * @property {string} [clue2] - Secondary clue for the word
  * @property {number} points - Points awarded for finding the word
  * @property {boolean} found - Whether the word has been found
+ * @property {boolean} revealed - Whether the word was revealed by the player
  * @property {Array<{start: number, end: number}>} positions - Word positions in text
  * @property {number} visibleClues - Number of clues currently visible for the word
  */
@@ -89,6 +90,7 @@ export const gameState = {
     clueAttempts: 0, // Number of answer attempts made
     initialCluesShown: 3, // Number of clues to show initially
     shownWordIndices: [], // Indices of words with visible clues
+    revealPenalty: 15, // Default penalty for revealing a word
   },
   config: {
     parameters: null, // Game rules like penalties
@@ -230,10 +232,11 @@ export function setVowel(vowel) {
  * @param {Array<GameWord>} words - Array of word objects to be set
  */
 export function setCurrentWords(words) {
-  // Initialize each word with visibleClues = 0
+  // Initialize each word with visibleClues = 0 and revealed = false
   gameState.current.words = words.map(word => ({
     ...word,
-    visibleClues: 0
+    visibleClues: 0,
+    revealed: false
   }));
   
   // Get indices of unfound words
@@ -582,4 +585,41 @@ function clearLetterCount(letter) {
  */
 export function getLetterCounts() {
   return { ...letterCounts };
+}
+
+/**
+ * Reveals a word to the player with a score penalty
+ * @param {number} wordIndex - The index of the word to reveal
+ * @returns {{success: boolean, pointsDeducted: number}} Result of the reveal operation
+ */
+export function revealWord(wordIndex) {
+  // Find the word to reveal
+  const word = gameState.current.words[wordIndex];
+  
+  // Check if the word exists and isn't already found or revealed
+  if (!word || word.found || word.revealed) {
+    return { success: false, pointsDeducted: 0 };
+  }
+  
+  // Calculate penalty - use word points or default reveal penalty
+  const penalty = word.points || gameState.current.revealPenalty;
+  
+  // Make sure we don't go below 0 points
+  const pointsToDeduct = Math.min(gameState.current.score, penalty);
+  
+  // Apply the penalty
+  gameState.current.score -= pointsToDeduct;
+  
+  // Mark the word as revealed
+  word.revealed = true;
+  
+  // Update letter counts as this word is now visible
+  updateLetterCounts(word.word);
+  
+  // Add this word to shown indices if not already there
+  if (!gameState.current.shownWordIndices.includes(wordIndex)) {
+    gameState.current.shownWordIndices.push(wordIndex);
+  }
+  
+  return { success: true, pointsDeducted: pointsToDeduct };
 }

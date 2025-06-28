@@ -24,6 +24,7 @@ import {
   getInitialCluesShown,
   getClueAttempts,
   getShownWordIndices,
+  revealWord,
 } from "./game-state.js";
 
 /**
@@ -48,11 +49,13 @@ export function renderParagraph(vowel) {
   // Create a list of all word positions that need to be replaced
   // Sort from end to start to avoid index shifting during replacement
   const allReplacements = getCurrentWords()
-    .flatMap((word) =>
+    .flatMap((word, wordIdx) =>
       word.positions.map((pos) => ({
         ...pos,
         word: word.word,
         found: word.found,
+        revealed: word.revealed,
+        wordIndex: wordIdx
       }))
     )
     .sort((a, b) => b.start - a.start);
@@ -64,16 +67,24 @@ export function renderParagraph(vowel) {
   });
 
   // Replace words one by one, starting from the end
-  allReplacements.forEach(({ start, end, word, found }) => {
+  allReplacements.forEach(({ start, end, word, found, revealed, wordIndex }) => {
     const wordToReplace = maskedParagraph.substring(start, end);
-    const wordIndex = wordToIndexMap.get(word.toLowerCase());
-    // Use different styling for found vs masked words
-    const maskedWord = found
-      ? `<span data-masked="true" data-clue-index="${wordIndex}" class="found">${wordToReplace}</span>`
-      : `<span data-masked="true" data-clue-index="${wordIndex}">${maskWordWithPurchases(
+    // Use different styling for found vs masked vs revealed words
+    let maskedWord;
+    
+    if (found) {
+      // Word found by player
+      maskedWord = `<span data-masked="true" data-clue-index="${wordIndex}" class="found">${wordToReplace}</span>`;
+    } else if (revealed) {
+      // Word revealed by player
+      maskedWord = `<span data-masked="true" data-clue-index="${wordIndex}" class="revealed">${wordToReplace}</span>`;
+    } else {
+      // Word still hidden
+      maskedWord = `<span data-masked="true" data-clue-index="${wordIndex}">${maskWordWithPurchases(
           wordToReplace,
           vowel
         )}</span>`;
+    }
 
     maskedParagraph =
       maskedParagraph.substring(0, start) +
@@ -106,6 +117,33 @@ function setupClueInteractions() {
 
   // Get all visible clues
   const visibleClues = Array.from(cluesList.getElementsByTagName("li"));
+  
+  // Add click handler for the eye icon in each clue
+  visibleClues.forEach(clue => {
+    const eyeIcon = clue.querySelector('.clue-eye');
+    if (eyeIcon) {
+      const wordIndex = clue.getAttribute('data-word-index');
+      
+      eyeIcon.addEventListener('click', (event) => {
+        // Stop propagation to prevent triggering the clue highlight
+        event.stopPropagation();
+        
+        // Reveal the word using our game state function
+        const result = revealWord(parseInt(wordIndex, 10));
+        
+        if (result.success) {
+          // Update the UI to reflect the revealed word
+          renderParagraph(getChosenVowel());
+          renderClues();
+          updateScore();
+          updateLetterCounts();
+          
+          // Show toast notification
+          showToast(`Word revealed for ${result.pointsDeducted} point penalty`, "info");
+        }
+      });
+    }
+  });
 
   /**
    * Helper function to highlight corresponding elements
@@ -212,25 +250,38 @@ export function renderClues() {
   
   // Display clues for each word
   words.forEach((gameWord, wordIndex) => {
-    const { clue, word, found } = gameWord;
+    const { clue, word, found, revealed } = gameWord;
     
-    // Show clue if the word is found OR if it's in the list of shown word indices
-    const shouldShowClue = found || shownWordIndices.includes(wordIndex);
+    // Show clue if the word is found OR revealed OR if it's in the list of shown word indices
+    const shouldShowClue = found || revealed || shownWordIndices.includes(wordIndex);
     
     if (shouldShowClue) {
       const li = document.createElement("li");
-      li.innerHTML = `${clue} (${word.length} letters) ${found ? "✓" : ""}`;
+      let statusMark = "";
+      
+      if (found) {
+        statusMark = "✓"; // Checkmark for found words
+      } else if (revealed) {
+        statusMark = "⚠️"; // Warning symbol for revealed words
+      }
+      
+      // Only show eye icon if word is not found and not revealed
+      const eyeIcon = (!found && !revealed) ? 
+        `<span class="clue-eye" title="Reveal - ${gameWord.points} point penalty"><i class="fa fa-eye"></i></span>` : "";
+      
+      li.innerHTML = `${clue} (${word.length}) ${statusMark}${eyeIcon}`;
+      
+      // Add appropriate class
       if (found) li.classList.add("found");
+      if (revealed) li.classList.add("revealed");
       
       // Add data attributes for tracking
       li.setAttribute("data-visible", "true");
       li.setAttribute("data-word-index", wordIndex);
-      li.setAttribute("data-clue-index", clueIndex);
+      li.setAttribute("data-clue-index", String(clueIndex));
       
       cluesList.appendChild(li);
       clueIndex++;
-      
-      // No need to track clues shown anymore
     }
   });
 
@@ -351,7 +402,7 @@ export function updateLetterCounts() {
 /**
  * Shows a toast message to the user
  * @param {string} message - Message to display
- * @param {'success'|'error'} [type='success'] - Type of toast
+ * @param {'success'|'error'|'info'} [type='success'] - Type of toast
  */
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
