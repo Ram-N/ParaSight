@@ -25,6 +25,13 @@ import {
   getClueAttempts,
   getShownWordIndices,
   revealWord,
+  isInitPhase,
+  isSelectionComplete,
+  getSelectedVowel,
+  getSelectedConsonants,
+  setSelectedVowel,
+  addSelectedConsonant,
+  completeLetterSelection,
 } from "./game-state.js";
 
 /**
@@ -115,6 +122,15 @@ function setupClueInteractions() {
   const cluesList = document.getElementById("clues-list");
   if (!cluesList) return;
 
+  // Check if we're in the initialization phase - if so, disable all interactions
+  const inInitPhase = isInitPhase() && !isSelectionComplete();
+  
+  // Add a class to the clues container if in init phase
+  const cluesContainer = document.getElementById("clues-container");
+  if (cluesContainer) {
+    cluesContainer.classList.toggle("disabled-clues", inInitPhase);
+  }
+  
   // Get all visible clues
   const visibleClues = Array.from(cluesList.getElementsByTagName("li"));
   
@@ -127,6 +143,12 @@ function setupClueInteractions() {
       eyeIcon.addEventListener('click', (event) => {
         // Stop propagation to prevent triggering the clue highlight
         event.stopPropagation();
+        
+        // Make sure letter selection is complete
+        if (isInitPhase() || !isSelectionComplete()) {
+          showToast("Please select 1 vowel and 2 consonants first", "error");
+          return;
+        }
         
         // Reveal the word using our game state function
         const result = revealWord(parseInt(wordIndex, 10));
@@ -151,6 +173,11 @@ function setupClueInteractions() {
    * @param {boolean} highlight - Whether to add or remove highlight
    */
   const highlightPair = (clueIndex, highlight) => {
+    // Make sure letter selection is complete
+    if (isInitPhase() || !isSelectionComplete()) {
+      return;
+    }
+    
     // Find the clue and all instances of its word
     const clue = document.querySelector(
       `#clues-list li[data-clue-index="${clueIndex}"]`
@@ -193,6 +220,12 @@ function setupClueInteractions() {
       );
 
       clue.addEventListener("click", () => {
+        // Make sure letter selection is complete
+        if (isInitPhase() || !isSelectionComplete()) {
+          showToast("Please select 1 vowel and 2 consonants first", "error");
+          return;
+        }
+        
         const firstWord = document.querySelector(
           `[data-masked="true"][data-clue-index="${wordIndex}"]`
         );
@@ -223,6 +256,12 @@ function setupClueInteractions() {
         );
 
         word.addEventListener("click", () => {
+          // Make sure letter selection is complete
+          if (isInitPhase() || !isSelectionComplete()) {
+            showToast("Please select 1 vowel and 2 consonants first", "error");
+            return;
+          }
+          
           if (clue) {
             clue.scrollIntoView({ behavior: "smooth", block: "center" });
           }
@@ -367,8 +406,9 @@ export function resetUI() {
 
 /**
  * Updates the letter count display on each tile
+ * @param {boolean} [showCounts=true] - Whether to show counts or hide them
  */
-export function updateLetterCounts() {
+export function updateLetterCounts(showCounts = true) {
   const counts = getLetterCounts();
   document.querySelectorAll(".letter-tile").forEach((tile) => {
     const letter = tile.getAttribute("data-letter");
@@ -391,9 +431,10 @@ export function updateLetterCounts() {
       const count = counts[lowerLetter] || 0;
       const countSpan = tile.querySelector(".count");
       if (countSpan) {
-        countSpan.textContent = count > 0 ? count.toString() : "";
+        // Only show counts if showCounts is true
+        countSpan.textContent = showCounts && count > 0 ? count.toString() : "";
       }
-      tile.classList.toggle("disabled", count === 0);
+      tile.classList.toggle("disabled", showCounts && count === 0);
       tile.classList.remove("purchased");
     }
   });
@@ -403,8 +444,9 @@ export function updateLetterCounts() {
  * Shows a toast message to the user
  * @param {string} message - Message to display
  * @param {'success'|'error'|'info'} [type='success'] - Type of toast
+ * @param {number} [duration=3000] - Duration in milliseconds
  */
-function showToast(message, type = "success") {
+export function showToast(message, type = "success", duration = 3000) {
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
@@ -418,7 +460,7 @@ function showToast(message, type = "success") {
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  }, duration);
 }
 
 /**
@@ -427,6 +469,10 @@ function showToast(message, type = "success") {
 export function setupMarketplace() {
   // Set up letter tile buttons
   const letterTiles = document.querySelectorAll(".letter-tile");
+
+  // Check if we're in the initial selection phase
+  const isInit = isInitPhase();
+  const selectionComplete = isSelectionComplete();
 
   // First check and mark any already purchased letters
   letterTiles.forEach((tile) => {
@@ -443,6 +489,12 @@ export function setupMarketplace() {
     }
   });
 
+  // Show/hide the selection instructions based on initialization state
+  const selectionInstructions = document.getElementById("selection-instructions");
+  if (selectionInstructions) {
+    selectionInstructions.style.display = isInit && !selectionComplete ? "block" : "none";
+  }
+
   // Set up click handlers
   letterTiles.forEach((button) => {
     button.addEventListener("click", () => {
@@ -458,48 +510,147 @@ export function setupMarketplace() {
       if (!letter) return;
 
       const isVowel = "aeiou".includes(letter.toLowerCase());
-      if (isVowel) {
-        const result = purchaseVowel(letter);
-        if (result.success) {
-          button.classList.add("purchased");
-          renderParagraph(getChosenVowel());
-          setupClueInteractions(); // Re-attach event listeners after rendering
-          updateScore();
-          updateLetterCounts();
-          showToast(
-            `Vowel '${letter.toUpperCase()}' purchased for ${
-              result.cost
-            } points!`
-          );
+      
+      // Handle the initial letter selection phase
+      if (isInitPhase()) {
+        if (isVowel) {
+          const selectedVowel = getSelectedVowel();
+          if (!selectedVowel) {
+            // Select this vowel
+            if (setSelectedVowel(letter)) {
+              button.classList.add("selected");
+              
+              // Update the selection display
+              const selectedVowelEl = document.getElementById("selected-vowel");
+              if (selectedVowelEl) {
+                selectedVowelEl.textContent = letter.toUpperCase();
+              }
+              
+              // Check if selection is complete
+              checkSelectionComplete();
+            }
+          } else {
+            showToast("You've already selected a vowel. Please select consonants.", "error");
+          }
         } else {
-          showToast(
-            `Not enough points to buy vowel (Cost: ${result.cost})`,
-            "error"
-          );
+          // It's a consonant
+          const selectedConsonants = getSelectedConsonants();
+          if (selectedConsonants.length < 2) {
+            // Select this consonant
+            if (addSelectedConsonant(letter)) {
+              button.classList.add("selected");
+              
+              // Update the selection display
+              const selectedConsonantsEl = document.getElementById("selected-consonants");
+              if (selectedConsonantsEl) {
+                const consonants = getSelectedConsonants().map(c => c.toUpperCase());
+                while (consonants.length < 2) {
+                  consonants.push("-");
+                }
+                selectedConsonantsEl.textContent = consonants.join(" ");
+              }
+              
+              // Check if selection is complete
+              checkSelectionComplete();
+            }
+          } else {
+            showToast("You've already selected 2 consonants.", "error");
+          }
         }
       } else {
-        const result = purchaseConsonant(letter);
-        if (result.success && result.consonant) {
-          button.classList.add("purchased");
-          renderParagraph(getChosenVowel());
-          setupClueInteractions(); // Re-attach event listeners after rendering
-          updateScore();
-          updateLetterCounts();
-          showToast(
-            `Consonant '${letter.toUpperCase()}' revealed for ${
-              result.cost
-            } points!`
-          );
+        // Regular gameplay phase
+        if (isVowel) {
+          const result = purchaseVowel(letter);
+          if (result.success) {
+            button.classList.add("purchased");
+            renderParagraph(getChosenVowel());
+            setupClueInteractions(); // Re-attach event listeners after rendering
+            updateScore();
+            updateLetterCounts();
+            showToast(
+              `Vowel '${letter.toUpperCase()}' purchased for ${
+                result.cost
+              } points!`
+            );
+          } else {
+            showToast(
+              `Not enough points to buy vowel (Cost: ${result.cost})`,
+              "error"
+            );
+          }
         } else {
-          showToast(
-            `Not enough points to reveal a consonant (Cost: ${result.cost})`,
-            "error"
-          );
+          const result = purchaseConsonant(letter);
+          if (result.success && result.consonant) {
+            button.classList.add("purchased");
+            renderParagraph(getChosenVowel());
+            setupClueInteractions(); // Re-attach event listeners after rendering
+            updateScore();
+            updateLetterCounts();
+            showToast(
+              `Consonant '${letter.toUpperCase()}' revealed for ${
+                result.cost
+              } points!`
+            );
+          } else {
+            showToast(
+              `Not enough points to reveal a consonant (Cost: ${result.cost})`,
+              "error"
+            );
+          }
         }
       }
     });
   });
 
-  // Initial letter count update
-  updateLetterCounts();
+  // Initial letter count update - don't show counts if in init phase
+  updateLetterCounts(!isInit);
+}
+
+/**
+ * Checks if the letter selection is complete and applies the selection
+ */
+function checkSelectionComplete() {
+  const selectedVowel = getSelectedVowel();
+  const selectedConsonants = getSelectedConsonants();
+  
+  if (selectedVowel && selectedConsonants.length === 2) {
+    // Complete the selection
+    if (completeLetterSelection()) {
+      // Apply the selection to the game
+      applyLetterSelection();
+    }
+  }
+}
+
+/**
+ * Applies the letter selection to the game state and UI
+ */
+function applyLetterSelection() {
+  // Get the selected letters
+  const vowel = getSelectedVowel();
+  const consonants = getSelectedConsonants();
+  
+  // Hide the selection instructions
+  const selectionInstructions = document.getElementById("selection-instructions");
+  if (selectionInstructions) {
+    selectionInstructions.style.display = "none";
+  }
+  
+  // Enable clue interactions
+  const cluesContainer = document.getElementById("clues-container");
+  if (cluesContainer) {
+    cluesContainer.classList.remove("disabled-clues");
+  }
+  
+  // Update the UI
+  renderParagraph(vowel);
+  setupClueInteractions();
+  updateScore();
+  updateLetterCounts(true);
+  
+  // Show toast confirmation
+  showToast(
+    `Letters selected: ${vowel.toUpperCase()}, ${consonants[0].toUpperCase()}, ${consonants[1].toUpperCase()}. Game started!`,
+    "success"
+  );
 }

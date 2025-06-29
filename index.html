@@ -80,39 +80,48 @@
             <section id="marketplace-section" class="section">
                 <div class="marketplace-items">
                     <div class="market-item">
-                        <div class="letter-grid-container">
-                            <div class="letter-grid">
-                                <div class="keyboard-row">
-                                    <button class="letter-tile" data-letter="q">Q<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="w">W<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="e">E<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="r">R<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="t">T<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="y">Y<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="u">U<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="i">I<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="o">O<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="p">P<span class="count"></span></button>
+                        <div class="letter-selection-wrapper">
+                            <div class="letter-grid-container">
+                                <div class="letter-grid">
+                                    <div class="keyboard-row">
+                                        <button class="letter-tile" data-letter="q">Q<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="w">W<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="e">E<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="r">R<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="t">T<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="y">Y<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="u">U<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="i">I<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="o">O<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="p">P<span class="count"></span></button>
+                                    </div>
+                                    <div class="keyboard-row">
+                                        <button class="letter-tile" data-letter="a">A<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="s">S<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="d">D<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="f">F<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="g">G<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="h">H<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="j">J<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="k">K<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="l">L<span class="count"></span></button>
+                                    </div>
+                                    <div class="keyboard-row">
+                                        <button class="letter-tile" data-letter="z">Z<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="x">X<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="c">C<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="v">V<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="b">B<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="n">N<span class="count"></span></button>
+                                        <button class="letter-tile" data-letter="m">M<span class="count"></span></button>
+                                    </div>
                                 </div>
-                                <div class="keyboard-row">
-                                    <button class="letter-tile" data-letter="a">A<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="s">S<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="d">D<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="f">F<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="g">G<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="h">H<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="j">J<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="k">K<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="l">L<span class="count"></span></button>
-                                </div>
-                                <div class="keyboard-row">
-                                    <button class="letter-tile" data-letter="z">Z<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="x">X<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="c">C<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="v">V<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="b">B<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="n">N<span class="count"></span></button>
-                                    <button class="letter-tile" data-letter="m">M<span class="count"></span></button>
+                            </div>
+                            <div id="selection-instructions" class="selection-instructions">
+                                <p class="selection-message">Please choose 1 vowel and 2 consonants to begin</p>
+                                <div class="selection-status">
+                                    <p><span class="selection-label">Vowel:</span> <span id="selected-vowel" class="selected-letter">-</span></p>
+                                    <p><span class="selection-label">Consonants:</span> <span id="selected-consonants" class="selected-letter">- -</span></p>
                                 </div>
                             </div>
                         </div>

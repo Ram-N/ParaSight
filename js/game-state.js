@@ -91,6 +91,9 @@ export const gameState = {
     initialCluesShown: 3, // Number of clues to show initially
     shownWordIndices: [], // Indices of words with visible clues
     revealPenalty: 15, // Default penalty for revealing a word
+    initPhase: true, // Whether the game is in the initial letter selection phase
+    selectedVowel: "", // The vowel selected during initialization
+    selectedConsonants: [], // The consonants selected during initialization
   },
   config: {
     parameters: null, // Game rules like penalties
@@ -106,6 +109,8 @@ export const marketState = {
   consonants: new Set(), // Set of purchased consonants
   /** @type {number} */
   hints: 0, // Number of hints purchased
+  /** @type {boolean} */
+  selectionComplete: false, // Whether the initial letter selection is complete
 };
 
 /** @type {{[key: string]: number}} */
@@ -144,6 +149,38 @@ export function getAllParagraphs() {
  */
 export function getChosenVowel() {
   return gameState.current.chosenVowel;
+}
+
+/**
+ * Gets whether the game is in the initial letter selection phase
+ * @returns {boolean} True if in initialization phase, false otherwise
+ */
+export function isInitPhase() {
+  return gameState.current.initPhase;
+}
+
+/**
+ * Gets the selected vowel during initialization
+ * @returns {string} The selected vowel
+ */
+export function getSelectedVowel() {
+  return gameState.current.selectedVowel;
+}
+
+/**
+ * Gets the selected consonants during initialization
+ * @returns {string[]} The selected consonants
+ */
+export function getSelectedConsonants() {
+  return gameState.current.selectedConsonants;
+}
+
+/**
+ * Gets whether the initial letter selection is complete
+ * @returns {boolean} True if selection is complete, false otherwise
+ */
+export function isSelectionComplete() {
+  return marketState.selectionComplete;
 }
 
 /**
@@ -225,6 +262,79 @@ export function setAllParagraphs(paragraphs) {
  */
 export function setVowel(vowel) {
   gameState.current.chosenVowel = vowel;
+}
+
+/**
+ * Sets the selected vowel during initialization
+ * @param {string} vowel - The vowel to be set as selected
+ */
+export function setSelectedVowel(vowel) {
+  if (gameState.current.initPhase && !gameState.current.selectedVowel) {
+    gameState.current.selectedVowel = vowel.toLowerCase();
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Adds a selected consonant during initialization
+ * @param {string} consonant - The consonant to be added
+ * @returns {boolean} Whether the consonant was added successfully
+ */
+export function addSelectedConsonant(consonant) {
+  if (gameState.current.initPhase && gameState.current.selectedConsonants.length < 2) {
+    gameState.current.selectedConsonants.push(consonant.toLowerCase());
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Completes the initial letter selection phase
+ * @returns {boolean} Whether the transition was successful
+ */
+export function completeLetterSelection() {
+  if (gameState.current.initPhase && 
+      gameState.current.selectedVowel && 
+      gameState.current.selectedConsonants.length === 2) {
+    gameState.current.initPhase = false;
+    marketState.selectionComplete = true;
+    
+    // Add selected letters to purchased sets
+    marketState.vowels.add(gameState.current.selectedVowel);
+    gameState.current.selectedConsonants.forEach(consonant => {
+      marketState.consonants.add(consonant);
+    });
+    
+    // Set the chosen vowel
+    gameState.current.chosenVowel = gameState.current.selectedVowel;
+    
+    // Update letter counts to exclude the revealed letters
+    updateLetterCountsAfterSelection();
+    
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Updates letter counts after initial selection to exclude revealed letters
+ * @private
+ */
+function updateLetterCountsAfterSelection() {
+  const selectedVowel = gameState.current.selectedVowel;
+  const selectedConsonants = gameState.current.selectedConsonants;
+  
+  // Remove the selected letters from the counts
+  if (selectedVowel && letterCounts[selectedVowel]) {
+    delete letterCounts[selectedVowel];
+  }
+  
+  selectedConsonants.forEach(consonant => {
+    if (letterCounts[consonant]) {
+      delete letterCounts[consonant];
+    }
+  });
 }
 
 /**
@@ -507,26 +617,55 @@ export function checkGuess(guess) {
  * @returns {string} The masked word
  */
 export function maskWordWithPurchases(word, vowel = "") {
-  return word
-    .split("")
-    .map((char) => {
-      const lowerChar = char.toLowerCase();
-      // Show the specified vowel if it matches
-      if (vowel && lowerChar === vowel.toLowerCase()) {
-        return char;
-      }
-      // Show purchased consonants
-      if (marketState.consonants.has(lowerChar)) {
-        return char;
-      }
-      // Show purchased vowels
-      if (marketState.vowels.has(lowerChar)) {
-        return char;
-      }
-      // Mask everything else
-      return "_";
-    })
-    .join("");
+  // Check if we're in the initial phase with selection complete
+  const inInitPhase = isInitPhase() && !marketState.selectionComplete;
+  
+  // If in normal phase or selection is complete, use standard masking
+  if (!inInitPhase) {
+    return word
+      .split("")
+      .map((char) => {
+        const lowerChar = char.toLowerCase();
+        // Show the specified vowel if it matches
+        if (vowel && lowerChar === vowel.toLowerCase()) {
+          return char;
+        }
+        // Show purchased consonants
+        if (marketState.consonants.has(lowerChar)) {
+          return char;
+        }
+        // Show purchased vowels
+        if (marketState.vowels.has(lowerChar)) {
+          return char;
+        }
+        // Mask everything else
+        return "_";
+      })
+      .join("");
+  } else {
+    // In initial phase - mask everything
+    return word
+      .split("")
+      .map(() => "_")
+      .join("");
+  }
+}
+
+/**
+ * Reveals selected letters in hidden words after initial selection
+ * @returns {void}
+ */
+export function revealSelectedLetters() {
+  if (!marketState.selectionComplete) return;
+  
+  // Get the selected letters
+  const vowel = gameState.current.selectedVowel;
+  const consonants = gameState.current.selectedConsonants;
+  
+  // No need to modify the masking algorithm as maskWordWithPurchases
+  // already handles revealing the selected letters based on market state
+  // The selected letters were added to marketState.vowels and marketState.consonants
+  // in completeLetterSelection()
 }
 
 /**

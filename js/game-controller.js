@@ -15,6 +15,9 @@ import {
   setCurrentWords,
   setGameParameters,
   setAllParagraphs,
+  isInitPhase,
+  isSelectionComplete,
+  revealSelectedLetters,
 } from "./game-state.js";
 
 import {
@@ -25,6 +28,7 @@ import {
   resetUI,
   setupMarketplace,
   updateLetterCounts,
+  showToast,
 } from "./ui-manager.js";
 
 /**
@@ -249,9 +253,21 @@ export async function initializeGame() {
 
     // Force a delay to ensure all setup is complete
     setTimeout(() => {
-      // Render initial game state
-      renderGameState();
-      updateLetterCounts(); // Update initial letter counts
+      // If we're in init phase, show different UI state
+      if (isInitPhase() && !isSelectionComplete()) {
+        // Only render the paragraph with masked words without revealing any letters
+        renderParagraph("");
+        renderClues();
+        updateScore();
+        // Show letter tiles without counts
+        updateLetterCounts(false);
+        // Show toast prompting letter selection
+        showToast("Please select 1 vowel and 2 consonants to begin", "info", 10000);
+      } else {
+        // Normal game initialization (after selection or on reload)
+        renderGameState();
+        updateLetterCounts(true); // Update initial letter counts
+      }
     }, 0);
   } catch (error) {
     console.error("Failed to initialize game:", error);
