@@ -468,6 +468,20 @@ export function setCurrentWords(words) {
     gameState.current.shownWordIndices.push(wordIndex);
   }
   
+  // Calculate the maximum possible score (initial score + sum of all word points)
+  let maxScore = 100; // Start with 100 links (initial score)
+  words.forEach(word => {
+    // Get the highest point value from the clues (typically the first clue - Indirect type)
+    if (word.clues && Array.isArray(word.clues) && word.clues.length > 0) {
+      // Use the first clue (Indirect type) which has the highest points
+      maxScore += word.clues[0].points || 0;
+    } else if (word.points) {
+      // Fallback to word's points property if clues aren't available
+      maxScore += word.points;
+    }
+  });
+  gameState.current.maxScore = maxScore;
+  
   gameState.current.score = 100; // Start with 100 links
   gameState.current.clueAttempts = 0; // Reset attempt counter
   initializeLetterCounts();

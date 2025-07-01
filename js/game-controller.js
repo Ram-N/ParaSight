@@ -35,6 +35,11 @@ import {
   showToast,
 } from "./ui-manager.js";
 
+import {
+  highlightCorrectWord,
+  createSparklesAroundElement
+} from "./animations.js";
+
 /**
  * Sets up the game UI and initializes event handlers
  * @private
@@ -90,9 +95,53 @@ function handleGuess(e) {
     }
 
     renderParagraph(getChosenVowel());
+    
+    // Add visual celebration to the found word
+    const word = getCurrentWords().find(w => w.word.toLowerCase() === guess.toLowerCase());
+    setTimeout(() => {
+      // Find all instances of the newly found word in the paragraph
+      if (word) {
+        // Find all found word spans
+        const foundElements = document.querySelectorAll('span.found');
+        let foundCount = 0;
+        
+        foundElements.forEach(element => {
+          // Check if this element contains our word
+          if (element.textContent.trim().toLowerCase() === word.word.toLowerCase()) {
+            // Apply animation and sparkles to this element
+            highlightCorrectWord(element);
+            foundCount++;
+          }
+        });
+        
+        // If we didn't find any elements, try once more with a broader approach
+        if (foundCount === 0) {
+          console.log("Using broader search for word:", word.word);
+          document.querySelectorAll('[data-masked="true"]').forEach(element => {
+            if (element.textContent.includes(word.word)) {
+              highlightCorrectWord(element);
+            }
+          });
+        }
+      }
+    }, 200); // Slight delay to ensure DOM has updated
+    
     renderClues();
     updateScore();
     updateLetterCounts();
+    
+    // Show toast with points earned
+    if (word) {
+      const lowestClueIndexSeen = word.lowestClueIndexSeen || 0;
+      const originalPoints = word.clues && word.clues[0] ? word.clues[0].points : 0;
+      
+      // If they've seen easier clues, explain the reduced points
+      if (lowestClueIndexSeen > 0 && originalPoints > result.pointsEarned) {
+        showToast(`Correct! You earned ${result.pointsEarned} links (reduced from ${originalPoints} because you've seen easier clues).`, "success");
+      } else {
+        showToast(`Correct! You earned ${result.pointsEarned} links.`, "success");
+      }
+    }
 
     if (result.gameComplete) {
       console.log("Game complete detected! Triggering end game.");
@@ -134,6 +183,7 @@ function setupGuessInput() {
 
     const result = checkGuess(guess);
     if (result.success) {
+      // Add success visual feedback to input
       input.classList.add("correct");
       setTimeout(() => input.classList.remove("correct"), 1000);
       
@@ -143,13 +193,44 @@ function setupGuessInput() {
         console.log("Revealed new suffix after correct guess");
       }
       
+      // Render updated paragraph
       renderParagraph(getChosenVowel());
+      
+      // Add visual celebration to the found word
+      const word = getCurrentWords().find(w => w.word.toLowerCase() === guess.toLowerCase());
+      setTimeout(() => {
+        // Find all instances of the newly found word in the paragraph
+        if (word) {
+          // Find all found word spans
+          const foundElements = document.querySelectorAll('span.found');
+          let foundCount = 0;
+          
+          foundElements.forEach(element => {
+            // Check if this element contains our word
+            if (element.textContent.trim().toLowerCase() === word.word.toLowerCase()) {
+              // Apply animation and sparkles to this element
+              highlightCorrectWord(element);
+              foundCount++;
+            }
+          });
+          
+          // If we didn't find any elements, try once more with a broader approach
+          if (foundCount === 0) {
+            console.log("Using broader search for word:", word.word);
+            document.querySelectorAll('[data-masked="true"]').forEach(element => {
+              if (element.textContent.includes(word.word)) {
+                highlightCorrectWord(element);
+              }
+            });
+          }
+        }
+      }, 200); // Slight delay to ensure DOM has updated
+      
       renderClues();
       updateScore();
       updateLetterCounts();
       
       // Show toast with points earned and information about why
-      const word = getCurrentWords().find(w => w.word.toLowerCase() === guess.toLowerCase());
       const lowestClueIndexSeen = word ? word.lowestClueIndexSeen : 0;
       const originalPoints = word && word.clues && word.clues[0] ? word.clues[0].points : 0;
       

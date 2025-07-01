@@ -37,6 +37,12 @@ import {
   getLowestClueIndexSeen,
 } from "./game-state.js";
 
+import {
+  celebrateGameOver,
+  highlightCorrectWord,
+  createSparklesAroundElement
+} from "./animations.js";
+
 /**
  * Updates the DOM element if it exists
  * @param {string} id - Element ID
@@ -471,14 +477,21 @@ export function renderClues() {
  * Updates the score display
  */
 export function updateScore() {
+  // Update current score
   updateElement(
     "score-value",
     (el) => (el.textContent = getCurrentScore().toString())
   );
+  
+  // Update max score
+  updateElement(
+    "max-score-value",
+    (el) => (el.textContent = getMaxScore().toString())
+  );
 }
 
 /**
- * Displays the game over message with final score
+ * Displays the game over message with final score and celebration animations
  */
 export function showGameOver() {
   const score = getCurrentScore();
@@ -502,6 +515,11 @@ export function showGameOver() {
   updateElement("paragraph-container", (el) =>
     el.insertAdjacentElement("afterend", endGameMessage)
   );
+  
+  // Start the celebration animations
+  setTimeout(() => {
+    celebrateGameOver();
+  }, 300);
 }
 
 /**

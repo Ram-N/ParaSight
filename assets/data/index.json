@@ -2,6 +2,9 @@
   "files": [
     "./assets/data/2025-07-01.json",
     "./assets/data/2025-07-02_Sedaris.json",
-    "./assets/data/2025-07-03_burnout.json"
+    "./assets/data/2025-07-03_burnout.json",
+    "./assets/data/2025-07-04.json",
+    "./assets/data/2025-07-05.json",
+    "./assets/data/2025-07-06.json"
   ]
 }
