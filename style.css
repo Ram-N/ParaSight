@@ -148,16 +148,91 @@ h1 {
   opacity: 0.9;
 }
 
-.clue-eye {
-  margin-left: 8px; /* Smaller margin */
-  color: #666666; /* Darker color for better visibility */
-  font-size: 0.9em; /* Smaller icon */
+.clue-text {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.clue-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clue-icon, .clue-eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+  font-size: 0.85em;
+  opacity: 0.7;
+  background-color: #f1f1f1;
+  border: 1px solid #e0e0e0;
+}
+
+.clue-icon:hover, .clue-eye:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.clue-icon.active {
+  opacity: 1;
+  border-color: #4a90e2;
+  background-color: #e3f2fd;
+  position: relative;
+  box-shadow: 0 0 0 2px #4a90e2;
+}
+
+.clue-icon.active::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background-color: #2196F3; /* Blue circle */
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.clue-icon-hard {
+  color: #d32f2f; /* Red */
+}
+
+.clue-icon-medium {
+  color: #f57c00; /* Orange */
+}
+
+.clue-icon-easy {
+  color: #388e3c; /* Green */
+}
+
+/* Style for clues with reduced points */
+.clue-icon.reduced-points {
+  opacity: 0.6;
+}
+
+.clue-eye {
+  margin-left: 0;
+  color: #666666; /* Darker color for better visibility */
+  font-size: 0.85em; /* Smaller icon */
+  background-color: #f1f1f1;
 }
 
 #clues-list li:hover .clue-eye {
   color: #2c6bbd; /* Darker blue on hover */
+}
+
+/* Make the clue list items flex containers for better layout */
+#clues-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
 }
 
 #guess-form {

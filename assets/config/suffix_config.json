@@ -1,0 +1,40 @@
+{
+  "suffixes": [
+    {
+      "ending": "ly",
+      "reveal_order": 1
+    },
+    {
+      "ending": "al",
+      "reveal_order": 8
+    },
+    {
+      "ending": "us",
+      "reveal_order": 9
+    },
+    {
+      "ending": "ul",
+      "reveal_order": 10
+    },
+    {
+      "ending": "ge",
+      "reveal_order": 13
+    },
+    {
+      "ending": "gy",
+      "reveal_order": 14
+    },
+    {
+      "ending": "es",
+      "reveal_order": 16
+    },
+    {
+      "ending": "ce",
+      "reveal_order": 17
+    },
+    {
+      "ending": "st",
+      "reveal_order": 18
+    }
+  ]
+}

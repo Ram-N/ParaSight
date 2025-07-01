@@ -79,6 +79,36 @@
 /** @type {Record<string, number>} */
 export const letterCounts = {}; // Tracks count of each letter remaining in hidden words
 
+/**
+ * Resets the game state to its initial values
+ * This function should be called when changing paragraphs or starting a new game
+ */
+export function resetGameState() {
+  // Reset the current game state
+  gameState.current.paragraph = null;
+  gameState.current.chosenVowel = "";
+  gameState.current.words = [];
+  gameState.current.score = 100; // Start with 100 links
+  gameState.current.maxScore = 0;
+  gameState.current.clueAttempts = 0;
+  gameState.current.shownWordIndices = [];
+  gameState.current.initPhase = true;
+  gameState.current.selectedVowel = "";
+  gameState.current.selectedConsonants = [];
+  gameState.current.wordsWithRevealedSuffixes = [];
+  
+  // Reset marketplace state
+  marketState.vowels.clear();
+  marketState.consonants.clear();
+  marketState.hints = 0;
+  marketState.selectionComplete = false;
+  
+  // Reset letter counts
+  Object.keys(letterCounts).forEach(key => delete letterCounts[key]);
+  
+  console.log("Game state completely reset");
+}
+
 /** @type {GameState} */
 export const gameState = {
   current: {
@@ -94,10 +124,13 @@ export const gameState = {
     initPhase: true, // Whether the game is in the initial letter selection phase
     selectedVowel: "", // The vowel selected during initialization
     selectedConsonants: [], // The consonants selected during initialization
+    wordsWithRevealedSuffixes: [], // Array of word indices that have their suffixes revealed
+    initialSuffixesShown: 1, // Number of words to show suffixes for initially (changed from 3 to 1)
   },
   config: {
     parameters: null, // Game rules like penalties
     paragraphs: null, // All available game content
+    suffixes: null, // Suffix configuration for progressive reveal
   },
 };
 
@@ -125,6 +158,55 @@ export const letterState = {
  */
 export function getCurrentParagraph() {
   return gameState.current.paragraph;
+}
+
+/**
+ * Gets the suffix configuration
+ * @returns {Object|null} The suffix configuration or null if not loaded
+ */
+export function getSuffixConfig() {
+  return gameState.config.suffixes;
+}
+
+/**
+ * Gets the indices of words that have their suffixes revealed
+ * @returns {Array<number>} Array of word indices
+ */
+export function getWordsWithRevealedSuffixes() {
+  return gameState.current.wordsWithRevealedSuffixes || [];
+}
+
+/**
+ * Gets the suffix for a specific word from the suffix configuration
+ * @param {string} word - The word to check
+ * @returns {Object|null} The matching suffix object or null if no match
+ */
+export function getWordSuffix(word) {
+  if (!word || typeof word !== 'string') return null;
+  
+  const lowerWord = word.toLowerCase();
+  const suffixConfig = getSuffixConfig();
+  
+  if (!suffixConfig || !suffixConfig.suffixes || !Array.isArray(suffixConfig.suffixes)) {
+    return null;
+  }
+  
+  // Check each suffix in the configuration
+  for (const suffix of suffixConfig.suffixes) {
+    if (lowerWord.endsWith(suffix.ending)) {
+      return suffix;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Gets the number of initially shown suffixes
+ * @returns {number} Number of initial suffixes
+ */
+export function getInitialSuffixesShown() {
+  return gameState.current.initialSuffixesShown;
 }
 
 /**
@@ -220,6 +302,11 @@ export function getShownWordIndices() {
  * @returns {number} The current score
  */
 export function getCurrentScore() {
+  // Ensure score is always a valid number
+  if (isNaN(gameState.current.score)) {
+    console.error("Score is NaN, resetting to 100");
+    gameState.current.score = 100;
+  }
   return gameState.current.score;
 }
 
@@ -254,6 +341,14 @@ export function setGameParameters(params) {
  */
 export function setAllParagraphs(paragraphs) {
   gameState.config.paragraphs = paragraphs;
+}
+
+/**
+ * Sets the suffix configuration for the game
+ * @param {Object} suffixConfig - The suffix configuration object
+ */
+export function setSuffixConfig(suffixConfig) {
+  gameState.config.suffixes = suffixConfig;
 }
 
 /**
@@ -312,6 +407,9 @@ export function completeLetterSelection() {
     // Update letter counts to exclude the revealed letters
     updateLetterCountsAfterSelection();
     
+    // Initialize the suffix reveal system
+    initializeSuffixes();
+    
     return true;
   }
   return false;
@@ -346,7 +444,9 @@ export function setCurrentWords(words) {
   gameState.current.words = words.map(word => ({
     ...word,
     visibleClues: 0,
-    revealed: false
+    revealed: false,
+    activeClueIndex: 0, // Default to the hardest clue (index 0)
+    lowestClueIndexSeen: 0 // Track the easiest clue seen (0=hard, 1=medium, 2=easy)
   }));
   
   // Get indices of unfound words
@@ -368,7 +468,7 @@ export function setCurrentWords(words) {
     gameState.current.shownWordIndices.push(wordIndex);
   }
   
-  gameState.current.score = 100; // Start with 100 points
+  gameState.current.score = 100; // Start with 100 links
   gameState.current.clueAttempts = 0; // Reset attempt counter
   initializeLetterCounts();
 }
@@ -378,7 +478,13 @@ export function setCurrentWords(words) {
  * @param {number} score - The score value to be set
  */
 export function setScore(score) {
-  gameState.current.score = score;
+  // Ensure we're setting a valid number
+  if (isNaN(score)) {
+    console.error("Attempted to set score to NaN, using 100 instead");
+    gameState.current.score = 100;
+  } else {
+    gameState.current.score = score;
+  }
 }
 
 /**
@@ -581,7 +687,25 @@ export function checkGuess(guess) {
 
   if (wordObj) {
     wordObj.found = true;
-    gameState.current.score += wordObj.points;
+    
+    // Get the lowest (easiest) clue index seen to determine points earned
+    const lowestClueIndexSeen = wordObj.lowestClueIndexSeen || 0;
+    
+    // Get the points value based on the lowest clue index seen
+    // (the player earns points based on the easiest clue they've seen)
+    let pointsEarned;
+    if (wordObj.clues && Array.isArray(wordObj.clues) && wordObj.clues[lowestClueIndexSeen]) {
+      // Use the points value from the lowest (easiest) clue seen
+      pointsEarned = wordObj.clues[lowestClueIndexSeen].points || 0;
+      console.log(`Using points (${pointsEarned}) from lowest clue index seen ${lowestClueIndexSeen} for word "${wordObj.word}"`);
+    } else {
+      // Fallback to the word's default points if clues are not available
+      pointsEarned = wordObj.points || 0;
+      console.log(`Using default points (${pointsEarned}) for word "${wordObj.word}"`);
+    }
+    
+    // Add the points to the score
+    gameState.current.score += pointsEarned;
 
     // Update letter counts when a word is found
     updateLetterCounts(wordObj.word);
@@ -590,7 +714,7 @@ export function checkGuess(guess) {
     return {
       success: true,
       gameComplete: allFound,
-      pointsEarned: wordObj.points,
+      pointsEarned: pointsEarned,
     };
   }
 
@@ -611,12 +735,13 @@ export function checkGuess(guess) {
 }
 
 /**
- * Masks a word, optionally revealing a vowel and purchased letters
+ * Masks a word, optionally revealing a vowel, purchased letters, and suffix endings
  * @param {string} word - The word to mask
  * @param {string} [vowel=''] - The vowel to reveal
+ * @param {number} [wordIndex=-1] - The index of the word in the game state
  * @returns {string} The masked word
  */
-export function maskWordWithPurchases(word, vowel = "") {
+export function maskWordWithPurchases(word, vowel = "", wordIndex = -1) {
   // Check if we're in the initial phase with selection complete
   const inInitPhase = isInitPhase() && !marketState.selectionComplete;
   
@@ -624,20 +749,29 @@ export function maskWordWithPurchases(word, vowel = "") {
   if (!inInitPhase) {
     return word
       .split("")
-      .map((char) => {
+      .map((char, index) => {
         const lowerChar = char.toLowerCase();
+        
         // Show the specified vowel if it matches
         if (vowel && lowerChar === vowel.toLowerCase()) {
           return char;
         }
+        
         // Show purchased consonants
         if (marketState.consonants.has(lowerChar)) {
           return char;
         }
+        
         // Show purchased vowels
         if (marketState.vowels.has(lowerChar)) {
           return char;
         }
+        
+        // Show suffix letters if this character is part of a revealed suffix
+        if (wordIndex >= 0 && isPartOfRevealedSuffix(word, index, wordIndex)) {
+          return char;
+        }
+        
         // Mask everything else
         return "_";
       })
@@ -761,4 +895,270 @@ export function revealWord(wordIndex) {
   }
   
   return { success: true, pointsDeducted: pointsToDeduct };
+}
+
+/**
+ * Updates the active clue index for a word
+ * @param {number} wordIndex - The index of the word in the game state
+ * @param {number} clueIndex - The index of the clue to set as active
+ * @returns {boolean} Whether the update was successful
+ */
+export function updateActiveClueIndex(wordIndex, clueIndex) {
+  if (wordIndex < 0 || wordIndex >= gameState.current.words.length) {
+    console.error(`Invalid word index: ${wordIndex}`);
+    return false;
+  }
+  
+  const word = gameState.current.words[wordIndex];
+  if (word.found || word.revealed) {
+    return false; // Can't change clue for found or revealed words
+  }
+  
+  // Ensure clue index is valid (word has clues array)
+  if (!word.clues || !Array.isArray(word.clues) || clueIndex >= word.clues.length) {
+    console.error(`Invalid clue index: ${clueIndex} for word at index ${wordIndex}`);
+    return false;
+  }
+  
+  // Update the active clue index
+  word.activeClueIndex = clueIndex;
+  
+  // Update the lowest clue index seen (higher index = easier clue)
+  if (clueIndex > word.lowestClueIndexSeen) {
+    word.lowestClueIndexSeen = clueIndex;
+    console.log(`Updated lowest clue index seen for word "${word.word}" to ${clueIndex}`);
+  }
+  
+  console.log(`Updated active clue index for word "${word.word}" to ${clueIndex}`);
+  return true;
+}
+
+/**
+ * Gets the active clue index for a word
+ * @param {number} wordIndex - The index of the word in the game state
+ * @returns {number} The active clue index (0, 1, or 2)
+ */
+export function getActiveClueIndex(wordIndex) {
+  if (wordIndex < 0 || wordIndex >= gameState.current.words.length) {
+    console.error(`Invalid word index: ${wordIndex}`);
+    return 0;
+  }
+  
+  return gameState.current.words[wordIndex].activeClueIndex || 0;
+}
+
+/**
+ * Gets the lowest (easiest) clue index seen for a word
+ * @param {number} wordIndex - The index of the word in the game state
+ * @returns {number} The lowest clue index seen (0, 1, or 2)
+ */
+export function getLowestClueIndexSeen(wordIndex) {
+  if (wordIndex < 0 || wordIndex >= gameState.current.words.length) {
+    console.error(`Invalid word index: ${wordIndex}`);
+    return 0;
+  }
+  
+  return gameState.current.words[wordIndex].lowestClueIndexSeen || 0;
+}
+
+/**
+ * Checks if a word ends with any of the revealed suffixes
+ * @param {string} word - The word to check
+ * @returns {Object|null} The matching suffix object or null if no match
+ */
+export function getMatchingSuffix(word) {
+  if (!word || typeof word !== 'string') return null;
+  
+  const lowerWord = word.toLowerCase();
+  const revealedSuffixes = getRevealedSuffixes();
+  
+  for (const suffix of revealedSuffixes) {
+    if (lowerWord.endsWith(suffix.ending)) {
+      return suffix;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Checks if a character at a specific position in a word is part of a revealed suffix
+ * @param {string} word - The word to check
+ * @param {number} charIndex - The character index to check
+ * @param {number} wordIndex - The index of the word in the game state
+ * @returns {boolean} True if the character is part of a revealed suffix
+ */
+export function isPartOfRevealedSuffix(word, charIndex, wordIndex) {
+  if (!word || typeof word !== 'string') return false;
+  
+  // Check if this word's index is in the revealed list
+  const revealedWordIndices = getWordsWithRevealedSuffixes();
+  if (!revealedWordIndices.includes(wordIndex)) {
+    return false;
+  }
+  
+  // Get the suffix for this word
+  const suffix = getWordSuffix(word);
+  if (!suffix || !suffix.ending) {
+    // This shouldn't happen for words in the revealed list
+    console.debug(`No valid suffix found for word "${word}" at index ${wordIndex}`);
+    return false;
+  }
+  
+  // Check if this character is in the suffix portion
+  const suffixStart = word.length - suffix.ending.length;
+  const isPartOfSuffix = charIndex >= suffixStart;
+  
+  if (isPartOfSuffix) {
+    console.debug(`Revealing suffix char at index ${charIndex} in word "${word}" with suffix "${suffix.ending}"`);
+  }
+  
+  return isPartOfSuffix;
+}
+
+/**
+ * Initializes the suffix reveal system, revealing the suffixes for the initial set of words
+ */
+export function initializeSuffixes() {
+  // Reset any previously revealed word suffixes
+  gameState.current.wordsWithRevealedSuffixes = [];
+  
+  const suffixConfig = getSuffixConfig();
+  if (!suffixConfig || !suffixConfig.suffixes || !Array.isArray(suffixConfig.suffixes)) {
+    console.warn("No valid suffix configuration found");
+    return;
+  }
+  
+  console.log("Initializing suffixes with config:", suffixConfig);
+  
+  // Find all words that have suffixes defined in the config
+  const words = getCurrentWords();
+  const wordsWithSuffixes = words
+    .map((word, index) => {
+      const suffix = getWordSuffix(word.word);
+      return { 
+        word, 
+        index, 
+        suffix: suffix ? suffix.ending : null 
+      };
+    })
+    .filter(item => item.suffix !== null && !item.word.found);
+  
+  console.log("Words with suffixes:", wordsWithSuffixes.map(item => 
+    `${item.word.word} (${item.suffix})`
+  ));
+  
+  if (wordsWithSuffixes.length === 0) {
+    console.warn("No words with suffixes found");
+    return;
+  }
+  
+  // Shuffle the words to randomly select which ones to reveal
+  const shuffledWords = [...wordsWithSuffixes];
+  for (let i = shuffledWords.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+  }
+  
+  // Choose first N words (or fewer if not enough available)
+  const initialCount = Math.min(gameState.current.initialSuffixesShown, shuffledWords.length);
+  
+  // Add the word indices to the revealed list
+  const revealedWordIndices = [];
+  for (let i = 0; i < initialCount; i++) {
+    const wordIndex = shuffledWords[i].index;
+    revealedWordIndices.push(wordIndex);
+    gameState.current.wordsWithRevealedSuffixes.push(wordIndex);
+    
+    // Update letter counts for this word's suffix
+    updateLetterCountsForWordSuffix(wordIndex);
+  }
+  
+  console.log(`Revealed suffixes for ${revealedWordIndices.length} initial words:`, 
+    revealedWordIndices.map(idx => {
+      const word = words[idx].word;
+      const suffix = getWordSuffix(word);
+      return `${word} (${suffix ? suffix.ending : 'unknown'})`;
+    }));
+}
+
+/**
+ * Reveals the suffix for the next word after a guess
+ * @returns {boolean} True if a new word suffix was revealed, false otherwise
+ */
+export function revealNextSuffix() {
+  // Find all words that have suffixes defined in the config
+  const words = getCurrentWords();
+  const alreadyRevealedIndices = getWordsWithRevealedSuffixes();
+  
+  // Get words with suffixes that haven't been revealed yet and aren't found
+  const revealableWords = words
+    .map((word, index) => ({ word, index }))
+    .filter(item => {
+      // Skip if this word's suffix is already revealed or the word is found
+      if (alreadyRevealedIndices.includes(item.index) || item.word.found) {
+        return false;
+      }
+      
+      // Check if the word has a valid suffix
+      return getWordSuffix(item.word.word) !== null;
+    });
+  
+  // If we have no more words to reveal, return false
+  if (revealableWords.length === 0) {
+    console.log("No more word suffixes to reveal");
+    return false;
+  }
+  
+  // Randomly select one word to reveal its suffix
+  const randomIndex = Math.floor(Math.random() * revealableWords.length);
+  const selectedWord = revealableWords[randomIndex];
+  
+  // Add the word index to the revealed list
+  gameState.current.wordsWithRevealedSuffixes.push(selectedWord.index);
+  
+  // Update letter counts for this word's suffix
+  updateLetterCountsForWordSuffix(selectedWord.index);
+  
+  // Get the suffix for logging
+  const suffix = getWordSuffix(selectedWord.word.word);
+  
+  console.log(`Revealed suffix for word "${selectedWord.word.word}" (${suffix ? suffix.ending : 'unknown'})`);
+  return true;
+}
+
+/**
+ * Updates letter counts for a word's revealed suffix
+ * @param {number} wordIndex - The index of the word with revealed suffix
+ */
+function updateLetterCountsForWordSuffix(wordIndex) {
+  const words = getCurrentWords();
+  
+  // Make sure the word index is valid
+  if (wordIndex < 0 || wordIndex >= words.length) {
+    console.error(`Invalid word index: ${wordIndex}`);
+    return;
+  }
+  
+  const word = words[wordIndex];
+  
+  // Skip if the word is already found
+  if (word.found) return;
+  
+  // Get the suffix for this word
+  const suffix = getWordSuffix(word.word);
+  if (!suffix || !suffix.ending) return;
+  
+  // For each letter in the suffix, decrement its count once for this word
+  suffix.ending.split("").forEach(letter => {
+    const lowerLetter = letter.toLowerCase();
+    if (letterCounts[lowerLetter] && letterCounts[lowerLetter] > 0) {
+      letterCounts[lowerLetter]--;
+      if (letterCounts[lowerLetter] === 0) {
+        delete letterCounts[lowerLetter];
+      }
+    }
+  });
+  
+  console.log(`Updated letter counts for word "${word.word}" with suffix "${suffix.ending}"`);
 }

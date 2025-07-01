@@ -32,6 +32,9 @@ import {
   setSelectedVowel,
   addSelectedConsonant,
   completeLetterSelection,
+  updateActiveClueIndex,
+  getActiveClueIndex,
+  getLowestClueIndexSeen,
 } from "./game-state.js";
 
 /**
@@ -89,7 +92,8 @@ export function renderParagraph(vowel) {
       // Word still hidden
       maskedWord = `<span data-masked="true" data-clue-index="${wordIndex}">${maskWordWithPurchases(
           wordToReplace,
-          vowel
+          vowel,
+          wordIndex
         )}</span>`;
     }
 
@@ -134,12 +138,56 @@ function setupClueInteractions() {
   // Get all visible clues
   const visibleClues = Array.from(cluesList.getElementsByTagName("li"));
   
-  // Add click handler for the eye icon in each clue
+  // Add click handlers for all clue icons
   visibleClues.forEach(clue => {
+    const wordIndex = clue.getAttribute('data-word-index');
+    const clueText = clue.querySelector('.clue-text');
+    
+    // Add click handlers for each difficulty icon
+    const clueIcons = clue.querySelectorAll('.clue-icon');
+    clueIcons.forEach(icon => {
+      icon.addEventListener('click', (event) => {
+        // Stop propagation to prevent triggering the clue highlight
+        event.stopPropagation();
+        
+        // Make sure letter selection is complete
+        if (isInitPhase() || !isSelectionComplete()) {
+          showToast("Please select 1 vowel and 2 consonants first", "error");
+          return;
+        }
+        
+        // Get the clue index (difficulty level)
+        const clueIndex = parseInt(icon.getAttribute('data-clue-index'), 10);
+        
+        // Update active state of icons
+        clueIcons.forEach(i => i.classList.remove('active'));
+        icon.classList.add('active');
+        
+        // Get the clues data from the parent li element
+        try {
+          const cluesData = JSON.parse(clue.getAttribute('data-clues') || '[]');
+          const selectedClue = cluesData[clueIndex];
+          
+          if (selectedClue && clueText) {
+            // Update the displayed clue text
+            const word = getCurrentWords()[parseInt(wordIndex, 10)];
+            clueText.textContent = `${selectedClue.clue} (${word?.word?.length || 0})`;
+            
+            // Update the active clue index in the UI
+            clue.setAttribute('data-active-clue', clueIndex.toString());
+            
+            // Update the active clue index in the game state
+            updateActiveClueIndex(parseInt(wordIndex, 10), clueIndex);
+          }
+        } catch (e) {
+          console.error('Error parsing clues data:', e);
+        }
+      });
+    });
+    
+    // Add click handler for the eye icon (reveal word)
     const eyeIcon = clue.querySelector('.clue-eye');
     if (eyeIcon) {
-      const wordIndex = clue.getAttribute('data-word-index');
-      
       eyeIcon.addEventListener('click', (event) => {
         // Stop propagation to prevent triggering the clue highlight
         event.stopPropagation();
@@ -161,7 +209,7 @@ function setupClueInteractions() {
           updateLetterCounts();
           
           // Show toast notification
-          showToast(`Word revealed for ${result.pointsDeducted} point penalty`, "info");
+          showToast(`Word revealed for ${result.pointsDeducted} link penalty`, "info");
         }
       });
     }
@@ -289,12 +337,12 @@ export function renderClues() {
   
   // Display clues for each word
   words.forEach((gameWord, wordIndex) => {
-    const { clue, word, found, revealed } = gameWord;
+    const { word, found, revealed, clues } = gameWord;
     
     // Show clue if the word is found OR revealed OR if it's in the list of shown word indices
     const shouldShowClue = found || revealed || shownWordIndices.includes(wordIndex);
     
-    if (shouldShowClue) {
+    if (shouldShowClue && Array.isArray(clues) && clues.length > 0) {
       const li = document.createElement("li");
       let statusMark = "";
       
@@ -304,11 +352,98 @@ export function renderClues() {
         statusMark = "⚠️"; // Warning symbol for revealed words
       }
       
-      // Only show eye icon if word is not found and not revealed
-      const eyeIcon = (!found && !revealed) ? 
-        `<span class="clue-eye" title="Reveal - ${gameWord.points} point penalty"><i class="fa fa-eye"></i></span>` : "";
+      // Get the active clue index from the game state
+      const activeClueIndex = getActiveClueIndex(wordIndex);
+      const activeClue = clues[activeClueIndex]?.clue || clues[0]?.clue || "";
+      const cluePoints = clues[activeClueIndex]?.points || clues[0]?.points || 0;
       
-      li.innerHTML = `${clue} (${word.length}) ${statusMark}${eyeIcon}`;
+      // Create a container for clue text and icons
+      const clueTextSpan = document.createElement("span");
+      clueTextSpan.className = "clue-text";
+      clueTextSpan.textContent = `${activeClue} (${word.length})`;
+      
+      // Create a container for all icons
+      const iconsContainer = document.createElement("span");
+      iconsContainer.className = "clue-icons";
+      
+      // Only show icons if word is not found and not revealed
+      if (!found && !revealed) {
+        // Create icons for each clue type (difficulty level)
+        // Get the lowest clue index seen to determine which clues are available at full points
+        const lowestClueIndexSeen = getLowestClueIndexSeen(wordIndex);
+        
+        // Icon 1: Hard/Indirect clue
+        const indirectIcon = document.createElement("span");
+        indirectIcon.className = `clue-icon clue-icon-hard ${activeClueIndex === 0 ? 'active' : ''}`;
+        // Add a class if this clue is no longer available at full points
+        if (lowestClueIndexSeen > 0) {
+          indirectIcon.classList.add('reduced-points');
+        }
+        indirectIcon.innerHTML = '<i class="fa fa-lock"></i>';
+        
+        // Update title to show if points are reduced
+        const cluePoints = clues[0]?.points || 0;
+        const actualPoints = lowestClueIndexSeen > 0 ? clues[lowestClueIndexSeen]?.points || 0 : cluePoints;
+        indirectIcon.title = lowestClueIndexSeen > 0 
+          ? `Indirect Clue - ${actualPoints} links (reduced from ${cluePoints})`
+          : `Indirect Clue - ${cluePoints} links`;
+          
+        indirectIcon.setAttribute("data-clue-index", "0");
+        iconsContainer.appendChild(indirectIcon);
+        
+        // Icon 2: Intermediate/Suggestive clue
+        if (clues.length > 1) {
+          const suggestiveIcon = document.createElement("span");
+          suggestiveIcon.className = `clue-icon clue-icon-medium ${activeClueIndex === 1 ? 'active' : ''}`;
+          // Add a class if this clue is no longer available at full points
+          if (lowestClueIndexSeen > 1) {
+            suggestiveIcon.classList.add('reduced-points');
+          }
+          suggestiveIcon.innerHTML = '<i class="fa fa-lightbulb"></i>';
+          
+          // Update title to show if points are reduced
+          const mediumCluePoints = clues[1]?.points || 0;
+          const actualMediumPoints = lowestClueIndexSeen > 1 ? clues[lowestClueIndexSeen]?.points || 0 : mediumCluePoints;
+          suggestiveIcon.title = lowestClueIndexSeen > 1 
+            ? `Suggestive Clue - ${actualMediumPoints} links (reduced from ${mediumCluePoints})`
+            : `Suggestive Clue - ${mediumCluePoints} links`;
+            
+          suggestiveIcon.setAttribute("data-clue-index", "1");
+          iconsContainer.appendChild(suggestiveIcon);
+        }
+        
+        // Icon 3: Easy/Straight clue
+        if (clues.length > 2) {
+          const straightIcon = document.createElement("span");
+          straightIcon.className = `clue-icon clue-icon-easy ${activeClueIndex === 2 ? 'active' : ''}`;
+          // No need to check for reduced points for the easiest clue
+          straightIcon.innerHTML = '<i class="fa fa-info-circle"></i>';
+          straightIcon.title = `Straight Clue - ${clues[2]?.points || 0} links`;
+          straightIcon.setAttribute("data-clue-index", "2");
+          iconsContainer.appendChild(straightIcon);
+        }
+        
+        // Icon 4: Reveal word (eye icon)
+        const revealIcon = document.createElement("span");
+        revealIcon.className = "clue-eye";
+        revealIcon.innerHTML = '<i class="fa fa-eye"></i>';
+        revealIcon.title = `Reveal - ${gameWord.points || 15} link penalty`;
+        iconsContainer.appendChild(revealIcon);
+      } else {
+        // Add the status mark to the text for found/revealed words
+        clueTextSpan.textContent += ` ${statusMark}`;
+      }
+      
+      // Store clues data as a data attribute for later access
+      li.setAttribute("data-clues", JSON.stringify(clues.map(c => ({ 
+        clue: c.clue, 
+        points: c.points,
+        type: c.type
+      }))));
+      
+      // Add elements to the list item
+      li.appendChild(clueTextSpan);
+      li.appendChild(iconsContainer);
       
       // Add appropriate class
       if (found) li.classList.add("found");
@@ -318,6 +453,10 @@ export function renderClues() {
       li.setAttribute("data-visible", "true");
       li.setAttribute("data-word-index", wordIndex);
       li.setAttribute("data-clue-index", String(clueIndex));
+      
+      // Get the actual active clue index from the game state
+      const wordActiveClueIndex = getActiveClueIndex(wordIndex).toString();
+      li.setAttribute("data-active-clue", wordActiveClueIndex); // Use the active clue from the game state
       
       cluesList.appendChild(li);
       clueIndex++;
@@ -386,22 +525,91 @@ export function disableVowelButtons() {
  * Resets the UI to its initial state
  */
 export function resetUI() {
+  // Force complete cleanup of all UI state
+  console.log("Performing complete UI reset");
+  
+  // Reset vowel tiles
   document
     .querySelectorAll(".vowel-tile")
     .forEach((btn) => btn.classList.remove("disabled"));
-
+    
+  // Reset letter tiles in keyboard/marketplace
+  document
+    .querySelectorAll(".letter-tile")
+    .forEach((tile) => {
+      // Remove all possible state classes
+      tile.classList.remove("disabled");
+      tile.classList.remove("purchased");
+      tile.classList.remove("selected");
+      
+      // Clear any counts
+      const countSpan = tile.querySelector(".count");
+      if (countSpan) {
+        countSpan.textContent = "";
+      }
+      
+      // Remove any event listeners by cloning and replacing
+      const newTile = tile.cloneNode(true);
+      tile.parentNode.replaceChild(newTile, tile);
+    });
+    
+  // Reset selected letters display
+  const selectedVowelEl = document.getElementById("selected-vowel");
+  if (selectedVowelEl) {
+    selectedVowelEl.textContent = "-";
+  }
+  
+  const selectedConsonantsEl = document.getElementById("selected-consonants");
+  if (selectedConsonantsEl) {
+    selectedConsonantsEl.textContent = "- -";
+  }
+  
+  // Show selection instructions
+  const selectionInstructions = document.getElementById("selection-instructions");
+  if (selectionInstructions) {
+    selectionInstructions.style.display = "block";
+  }
+  
+  // Reset clues container
+  const cluesContainer = document.getElementById("clues-container");
+  if (cluesContainer) {
+    cluesContainer.classList.add("disabled-clues");
+  }
+  
+  // Clear clues list
+  const cluesList = document.getElementById("clues-list");
+  if (cluesList) {
+    cluesList.innerHTML = "";
+  }
+  
+  // Reset input field
   const input = document.getElementById("guess-input");
   if (input && input instanceof HTMLInputElement) {
     input.disabled = false;
     input.placeholder = "Enter your guess...";
+    input.value = "";
+  }
+  
+  // Clear paragraph container
+  const paragraphContainer = document.getElementById("paragraph-container");
+  if (paragraphContainer) {
+    paragraphContainer.innerHTML = "";
   }
 
+  // Remove any game over message
   const existingMessage = document.querySelector(".game-over-message");
   if (existingMessage) {
     existingMessage.remove();
   }
 
+  // Reset score display
   updateScore();
+  
+  // Clear any toast messages
+  const toasts = document.querySelectorAll(".toast");
+  toasts.forEach(toast => toast.remove());
+  
+  console.log("UI completely reset for new game");
 }
 
 /**
@@ -493,6 +701,22 @@ export function setupMarketplace() {
   const selectionInstructions = document.getElementById("selection-instructions");
   if (selectionInstructions) {
     selectionInstructions.style.display = isInit && !selectionComplete ? "block" : "none";
+    
+    // Also update the selection display
+    const selectedVowelEl = document.getElementById("selected-vowel");
+    if (selectedVowelEl) {
+      const vowel = getSelectedVowel();
+      selectedVowelEl.textContent = vowel ? vowel.toUpperCase() : "-";
+    }
+    
+    const selectedConsonantsEl = document.getElementById("selected-consonants");
+    if (selectedConsonantsEl) {
+      const consonants = getSelectedConsonants().map(c => c.toUpperCase());
+      while (consonants.length < 2) {
+        consonants.push("-");
+      }
+      selectedConsonantsEl.textContent = consonants.length > 0 ? consonants.join(" ") : "- -";
+    }
   }
 
   // Set up click handlers
@@ -570,11 +794,11 @@ export function setupMarketplace() {
             showToast(
               `Vowel '${letter.toUpperCase()}' purchased for ${
                 result.cost
-              } points!`
+              } links!`
             );
           } else {
             showToast(
-              `Not enough points to buy vowel (Cost: ${result.cost})`,
+              `Not enough links to buy vowel (Cost: ${result.cost})`,
               "error"
             );
           }
@@ -589,11 +813,11 @@ export function setupMarketplace() {
             showToast(
               `Consonant '${letter.toUpperCase()}' revealed for ${
                 result.cost
-              } points!`
+              } links!`
             );
           } else {
             showToast(
-              `Not enough points to reveal a consonant (Cost: ${result.cost})`,
+              `Not enough links to reveal a consonant (Cost: ${result.cost})`,
               "error"
             );
           }

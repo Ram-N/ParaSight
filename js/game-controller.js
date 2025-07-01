@@ -15,9 +15,13 @@ import {
   setCurrentWords,
   setGameParameters,
   setAllParagraphs,
+  setSuffixConfig,
   isInitPhase,
   isSelectionComplete,
   revealSelectedLetters,
+  revealNextSuffix,
+  initializeSuffixes,
+  resetGameState,
 } from "./game-state.js";
 
 import {
@@ -79,9 +83,16 @@ function handleGuess(e) {
     input.classList.add("correct");
     setTimeout(() => input.classList.remove("correct"), 1000);
 
+    // Reveal next suffix after correct guess
+    const suffixRevealed = revealNextSuffix();
+    if (suffixRevealed) {
+      console.log("Revealed new suffix after correct guess");
+    }
+
     renderParagraph(getChosenVowel());
     renderClues();
     updateScore();
+    updateLetterCounts();
 
     if (result.gameComplete) {
       console.log("Game complete detected! Triggering end game.");
@@ -90,6 +101,15 @@ function handleGuess(e) {
   } else {
     input.classList.add("wrong");
     setTimeout(() => input.classList.remove("wrong"), 1000);
+    
+    // Reveal next suffix after wrong guess too
+    const suffixRevealed = revealNextSuffix();
+    if (suffixRevealed) {
+      console.log("Revealed new suffix after wrong guess");
+    }
+    
+    renderParagraph(getChosenVowel()); // Also re-render paragraph to show newly revealed suffix
+    renderClues();
     updateScore();
   }
 
@@ -116,10 +136,29 @@ function setupGuessInput() {
     if (result.success) {
       input.classList.add("correct");
       setTimeout(() => input.classList.remove("correct"), 1000);
+      
+      // Reveal next suffix after correct guess
+      const suffixRevealed = revealNextSuffix();
+      if (suffixRevealed) {
+        console.log("Revealed new suffix after correct guess");
+      }
+      
       renderParagraph(getChosenVowel());
       renderClues();
       updateScore();
       updateLetterCounts();
+      
+      // Show toast with points earned and information about why
+      const word = getCurrentWords().find(w => w.word.toLowerCase() === guess.toLowerCase());
+      const lowestClueIndexSeen = word ? word.lowestClueIndexSeen : 0;
+      const originalPoints = word && word.clues && word.clues[0] ? word.clues[0].points : 0;
+      
+      // If they've seen easier clues, explain the reduced points
+      if (lowestClueIndexSeen > 0 && originalPoints > result.pointsEarned) {
+        showToast(`Correct! You earned ${result.pointsEarned} links (reduced from ${originalPoints} because you've seen easier clues).`, "success");
+      } else {
+        showToast(`Correct! You earned ${result.pointsEarned} links.`, "success");
+      }
 
       if (result.gameComplete) {
         showGameOver();
@@ -127,7 +166,15 @@ function setupGuessInput() {
     } else {
       input.classList.add("wrong");
       setTimeout(() => input.classList.remove("wrong"), 1000);
+      
+      // Reveal next suffix after wrong guess too
+      const suffixRevealed = revealNextSuffix();
+      if (suffixRevealed) {
+        console.log("Revealed new suffix after wrong guess");
+      }
+      
       // Even for wrong guesses, we need to re-render clues to show newly revealed ones
+      renderParagraph(getChosenVowel()); // Also re-render paragraph to show newly revealed suffix
       renderClues();
       updateScore();
     }
@@ -159,22 +206,86 @@ function renderGameState() {
  */
 export async function initializeGame() {
   console.log("Window loaded, initializing game...");
+  
+  // Reset both UI elements and game state for a completely fresh start
+  resetGameState(); // Reset the game state first
+  resetUI(); // Then reset the UI
 
   try {
-    // Load game parameters and paragraphs
-    const [params, gameData] = await Promise.all([
-      fetch("./game_parameters.json").then((r) => r.json()),
-      fetch("./paras.json").then((r) => r.json()),
-    ]);
+    // Load game parameters
+    const params = await fetch("./game_parameters.json").then((r) => r.json());
+
+    // Load suffix configuration
+    const suffixConfig = await fetch("./assets/config/suffix_config.json")
+      .then(response => response.json())
+      .catch(error => {
+        console.error("Error loading suffix configuration:", error);
+        return { suffixes: [] };
+      });
+    
+    console.log("Loaded suffix configuration:", suffixConfig);
+
+    // Load all JSON files from assets/data directory
+    const dataFiles = await fetch("./assets/data/index.json")
+      .then(response => {
+        if (response.ok) {
+          // If index.json exists, use it to get the list of files
+          return response.json();
+        } else {
+          // Otherwise, we'll rely on our glob detection at build time
+          console.error("Error: index.json not found in assets/data directory");
+          // Return an empty array, as the data structure has changed
+          return { files: [] };
+        }
+      })
+      .then(data => data.files || []);
+
+    // Fetch all data files in parallel
+    const paragraphsData = await Promise.all(
+      dataFiles.map(file => 
+        fetch(file)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error ${response.status} while loading ${file}`);
+            }
+            return response.json();
+          })
+          .catch(error => {
+            console.error(`Error loading ${file}:`, error);
+            // Log more details about the file to help with debugging
+            console.warn(`Failed to load data file: ${file}. Please check that the file exists and is valid JSON.`);
+            return null;
+          })
+      )
+    );
+
+    // Filter out any failed loads and combine all paragraphs
+    const allParagraphs = paragraphsData
+      .filter(data => data !== null)
+      .map(data => ({
+        id: data.id,
+        date: data.date,
+        title: data.title,
+        text: data.text,
+        hiddenWords: data.hiddenWords
+      }));
 
     // Check if we have valid game data
-    if (!gameData || !Array.isArray(gameData.paragraphs)) {
-      throw new Error("Invalid game data structure");
+    if (!allParagraphs || !Array.isArray(allParagraphs) || allParagraphs.length === 0) {
+      throw new Error("No valid paragraph data found in data files");
     }
+
+    console.log(`Loaded ${allParagraphs.length} paragraphs from data files`);
+    
+    // Log loaded paragraphs for debugging
+    allParagraphs.forEach(paragraph => {
+      console.log(`Loaded paragraph: ID=${paragraph.id}, Date=${paragraph.date}, Title=${paragraph.title?.substring(0, 30)}...`);
+    });
 
     // Initialize game state
     setGameParameters(params);
-    setAllParagraphs(gameData.paragraphs);
+    setAllParagraphs(allParagraphs);
+    setSuffixConfig(suffixConfig);
 
     // Get the current date from the date element
     const dateElement = document.getElementById("current-date");
@@ -182,29 +293,42 @@ export async function initializeGame() {
     let selectedParagraph = null;
     
     if (currentDateStr) {
-      // Format date for comparison (YYYY-MM-DD)
-      const currentDate = new Date(currentDateStr);
-      const formattedDate = currentDate.toISOString().split('T')[0];
-      
-      // Find paragraph matching the current date
-      selectedParagraph = gameData.paragraphs.find(
-        paragraph => paragraph.date && 
-        new Date(paragraph.date).toISOString().split('T')[0] === formattedDate
-      );
-      
-      console.log(`Looking for paragraph with date: ${formattedDate}`);
-      if (selectedParagraph) {
-        console.log(`Found matching paragraph for date: ${formattedDate}`);
-      } else {
-        console.log(`No paragraph found for date: ${formattedDate}, selecting random paragraph`);
+      try {
+        // Parse the displayed date string to a Date object
+        const currentDate = new Date(currentDateStr);
+        
+        // Format date for comparison (YYYY-MM-DD)
+        const formattedDate = currentDate.toISOString().split('T')[0];
+        
+        console.log(`Looking for paragraph with date: ${formattedDate}`);
+        
+        // Find paragraph matching the current date
+        selectedParagraph = allParagraphs.find(paragraph => {
+          if (!paragraph || !paragraph.date) return false;
+          
+          // Convert paragraph date to same format for comparison
+          const paragraphDate = new Date(paragraph.date);
+          const formattedParagraphDate = paragraphDate.toISOString().split('T')[0];
+          
+          return formattedParagraphDate === formattedDate;
+        });
+        
+        if (selectedParagraph) {
+          console.log(`Found matching paragraph for date: ${formattedDate}`);
+        } else {
+          console.log(`No paragraph found for date: ${formattedDate}, selecting random paragraph`);
+        }
+      } catch (error) {
+        console.error("Error parsing date:", error);
       }
     }
     
     // If no paragraph found for the current date, pick a random one
     if (!selectedParagraph) {
-      const randomIndex = Math.floor(Math.random() * gameData.paragraphs.length);
-      /** @type {typeof gameData.paragraphs[0]} */
-      selectedParagraph = gameData.paragraphs[randomIndex];
+      const randomIndex = Math.floor(Math.random() * allParagraphs.length);
+      /** @type {typeof allParagraphs[0]} */
+      selectedParagraph = allParagraphs[randomIndex];
+      console.log(`Selected random paragraph with ID: ${selectedParagraph.id}`);
     }
     if (!selectedParagraph || !Array.isArray(selectedParagraph.hiddenWords)) {
       throw new Error("Invalid paragraph data structure");
@@ -249,6 +373,8 @@ export async function initializeGame() {
     setCurrentParagraph(selectedParagraph);
     updateScore(); // Ensure score is displayed after initialization        // Set up event listeners
     setupGuessInput();
+    
+    // Setup marketplace (re-adding event listeners since we cloned tiles in resetUI)
     setupMarketplace();
 
     // Force a delay to ensure all setup is complete

@@ -7,10 +7,15 @@ A unique word guessing game where players reveal hidden words in paragraphs by s
 ```
 ClueChain/
 ├── index.html           # Main HTML file with game UI structure
-├── style.css           # Game styling
-├── main.js            # Entry point that initializes the game
-├── paras.json         # Game content: paragraphs and hidden words
+├── style.css            # Game styling
+├── main.js              # Entry point that initializes the game
 ├── game_parameters.json # Game configuration (penalties, etc.)
+├── assets/
+│   ├── config/
+│   │   └── suffix_config.json # Configuration for suffixes
+│   └── data/
+│       ├── index.json   # Index of all paragraph data files
+│       └── *.json       # Individual paragraph data files (one per day)
 └── js/
     ├── game-state.js     # Core game state management
     ├── game-controller.js # Game initialization and event handling

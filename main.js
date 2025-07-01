@@ -77,21 +77,45 @@ window.onload = () => {
   // Fetch the paragraphs to find dates with content
   async function fetchContentDates() {
     try {
-      const response = await fetch("./paras.json");
-      const data = await response.json();
+      // First try to fetch the index file
+      const indexResponse = await fetch("./assets/data/index.json");
       
-      if (data && Array.isArray(data.paragraphs)) {
-        // Extract dates from paragraphs
-        data.paragraphs.forEach(paragraph => {
-          if (paragraph.date) {
-            daysWithContent.push(new Date(paragraph.date).toISOString().split('T')[0]);
+      if (!indexResponse.ok) {
+        console.error("Failed to load index.json");
+        return;
+      }
+      
+      const indexData = await indexResponse.json();
+      const dataFiles = indexData.files || [];
+      
+      // Fetch all data files in parallel
+      const paragraphsData = await Promise.all(
+        dataFiles.map(file => 
+          fetch(file)
+            .then(response => response.json())
+            .catch(error => {
+              console.error(`Error loading ${file}:`, error);
+              return null;
+            })
+        )
+      );
+      
+      // Extract dates from all paragraphs
+      paragraphsData.forEach(paragraph => {
+        if (paragraph && paragraph.date) {
+          try {
+            const dateStr = new Date(paragraph.date).toISOString().split('T')[0];
+            daysWithContent.push(dateStr);
+            console.log(`Added content date: ${dateStr}, Title: ${paragraph.title?.substring(0, 30) || 'Unknown'}...`);
+          } catch (error) {
+            console.error(`Error parsing date from paragraph: ${paragraph.date}`, error);
           }
-        });
-        
-        // Update calendar to show days with content
-        if (customCalendar.classList.contains("show")) {
-          renderCalendarDays();
         }
+      });
+      
+      // Update calendar to show days with content
+      if (customCalendar.classList.contains("show")) {
+        renderCalendarDays();
       }
     } catch (error) {
       console.error("Error fetching content dates:", error);
@@ -151,15 +175,43 @@ window.onload = () => {
       
       // Add click handler to select date
       dayElement.addEventListener("click", () => {
-        // Update current date and display
-        currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
-        updateDateDisplay(currentDate);
+        // More comprehensive check if game is in progress
+        const isGameInProgress = document.querySelectorAll('#clues-list li.found').length > 0 || 
+                                 document.querySelectorAll('.letter-tile.purchased').length > 0 ||
+                                 !document.getElementById('selection-instructions') || 
+                                 (document.getElementById('selection-instructions') && 
+                                  document.getElementById('selection-instructions').style.display === 'none');
         
-        // Hide calendar
-        customCalendar.classList.remove("show");
-        
-        // Reinitialize game with new date
-        initializeGame();
+        if (isGameInProgress) {
+          // Ask for confirmation before changing date and resetting game
+          if (confirm("Changing the date will reset your current game progress. Continue?")) {
+            // Update current date and display
+            currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+            updateDateDisplay(currentDate);
+            
+            // Log the selected date for debugging
+            console.log(`Selected date: ${currentDate.toISOString().split('T')[0]}`);
+            
+            // Hide calendar
+            customCalendar.classList.remove("show");
+            
+            // Reinitialize game with new date
+            initializeGame();
+          }
+        } else {
+          // No game in progress, proceed without confirmation
+          currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+          updateDateDisplay(currentDate);
+          
+          // Log the selected date for debugging
+          console.log(`Selected date: ${currentDate.toISOString().split('T')[0]}`);
+          
+          // Hide calendar
+          customCalendar.classList.remove("show");
+          
+          // Reinitialize game with new date
+          initializeGame();
+        }
       });
       
       calendarDaysContainer.appendChild(dayElement);
@@ -238,6 +290,20 @@ window.onload = () => {
   // Add date navigation handlers
   arrows.forEach((arrow) => {
     arrow.addEventListener("click", (e) => {
+      // More comprehensive check if game is in progress
+      const isGameInProgress = document.querySelectorAll('#clues-list li.found').length > 0 || 
+                               document.querySelectorAll('.letter-tile.purchased').length > 0 ||
+                               !document.getElementById('selection-instructions') || 
+                               (document.getElementById('selection-instructions') && 
+                                document.getElementById('selection-instructions').style.display === 'none');
+      
+      if (isGameInProgress) {
+        // Ask for confirmation before changing date and resetting game
+        if (!confirm("Changing the date will reset your current game progress. Continue?")) {
+          return; // Cancel if user doesn't confirm
+        }
+      }
+      
       const newDate = new Date(currentDate);
       const isLeft = e.target.textContent.includes("←");
 
@@ -249,6 +315,9 @@ window.onload = () => {
 
       currentDate = newDate;
       updateDateDisplay(currentDate);
+      
+      // Log the navigated date for debugging
+      console.log(`Navigated to date: ${currentDate.toISOString().split('T')[0]}`);
       
       // Update date picker value to match
       if (datePicker) {
