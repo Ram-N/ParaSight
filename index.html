@@ -7,6 +7,7 @@
     <title>ClueChain - Word Guessing Game</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="animations.css">
+    <link rel="stylesheet" href="assets/css/help-modal.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -74,7 +75,10 @@
                 <div class="input-container">
                     <input type="text" id="guess-input" placeholder="Enter your guess...">
                     <button id="submit-guess">Submit</button>
-                    <h3 class="score-display">Links: <span id="score-value">0</span>/<span id="max-score-value">0</span></h3>
+                    <h3 class="score-display"><span id="score-value">0</span> <span class="max-score">(Max Possible: <span id="max-score-value">0</span>)</span></h3>
+                    <div class="chain-progress-container">
+                        <div class="chain-links" id="chain-links"></div>
+                    </div>
                 </div>
             </section>
 

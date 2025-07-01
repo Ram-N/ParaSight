@@ -72,6 +72,7 @@ h1 {
   min-height: 0;
   overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Hide horizontal scrollbar */
+  perspective: 1000px; /* Add perspective for 3D effect */
 }
 
 #clues-container.disabled-clues {
@@ -107,6 +108,36 @@ h1 {
   font-size: 0.85rem;
   line-height: 1.2;
   margin: 0; /* Remove all margins */
+  position: relative;
+}
+
+/* Container for active clues */
+.active-clues-container {
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Container for solved clues */
+.solved-clues-container {
+  position: relative;
+  border-top: 1px dashed #ccc;
+  padding-top: 10px;
+  margin-top: 15px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* Solved clues heading */
+.solved-clues-heading {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 #clues-list li {
@@ -146,6 +177,64 @@ h1 {
   color: #e65100; /* Darker orange color for revealed words */
   border-left-color: #e65100 !important;
   opacity: 0.9;
+}
+
+/* Simplified slide-down animation for clues */
+@keyframes slideDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+    max-height: 100px;
+    margin-bottom: 6px;
+    padding: 6px 10px 6px 8px;
+  }
+  25% {
+    background-color: rgba(76, 175, 80, 0.1);
+    border-left-color: #4caf50;
+  }
+  75% {
+    transform: translateY(20px);
+    opacity: 0.5;
+    max-height: 100px;
+    margin-bottom: 6px;
+    padding: 6px 10px 6px 8px;
+  }
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: 0;
+    padding: 0;
+    border-width: 0;
+  }
+}
+
+/* Class applied when a word is found */
+.tumble-down {
+  animation: slideDown 2.5s ease-in-out forwards;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  pointer-events: none; /* Prevent interaction during animation */
+}
+
+/* Styles for solved clues container items */
+.solved-clues-container li {
+  transform: rotateX(0deg);
+  opacity: 0.7;
+  margin-bottom: 4px !important; /* Less spacing for solved items */
+  background-color: #f9f9f9;
+  border-left-width: 2px;
+  font-size: 0.8em;
+  min-height: 24px;
+  box-shadow: none;
+  transition: none;
+}
+
+.solved-clues-container li:hover {
+  transform: none;
+  background-color: #f0f0f0;
+  box-shadow: none;
 }
 
 .clue-text {
@@ -259,6 +348,13 @@ h1 {
   border-color: #ef5350;
 }
 
+#guess-input.disabled,
+button.disabled {
+  opacity: 0.5;
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
 button {
   padding: 10px 20px;
   background: #4a90e2;
@@ -289,6 +385,141 @@ button:hover {
   white-space: nowrap;
 }
 
+.score-display #score-value {
+  font-weight: bold;
+  color: #4a90e2;
+  font-size: 1.3rem;
+}
+
+.score-display .max-score {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 4px;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+/* Chain Links Progress Styling */
+.chain-progress-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-bottom: 5px;
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 350px;
+  padding: 5px 0;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scroll-behavior: smooth;
+}
+
+.chain-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  width: auto;
+  white-space: nowrap; /* Keep all links in a single line */
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments for chain links */
+@media (max-width: 768px) {
+  .chain-progress-container {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-bottom: 8px; /* Add padding for scrollbar */
+  }
+  
+  .chain-link {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    margin: 0 -4px; /* Slightly reduced negative margin on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .input-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .chain-progress-container {
+    margin-top: 10px;
+    order: 4; /* Push it below other elements */
+    width: 100%;
+  }
+  
+  .chain-link {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    margin: 0;
+  }
+}
+
+.chain-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 30px;
+  margin: 0 -5px; /* More negative margin for tighter chain appearance */
+  font-size: 15px;
+  position: relative;
+  transition: all 0.3s ease;
+  /* No default rotation - will be applied via JS */
+  z-index: 1;
+}
+
+.chain-link.active {
+  color: #4a90e2;
+  transform: scale(1.2) rotate(var(--rotation, 10deg));
+  z-index: 3;
+}
+
+.chain-link.inactive {
+  color: #ccc;
+  opacity: 0.7;
+  transform: rotate(var(--rotation, 10deg));
+  z-index: 1;
+}
+
+.chain-link.revealed {
+  color: #e65100; /* Orange color for revealed words */
+  transform: scale(1.1) rotate(var(--rotation, 10deg));
+  z-index: 2;
+}
+
+/* Animation for new chain link */
+@keyframes linkAdded {
+  0% {
+    transform: scale(0.5) rotate(var(--rotation, 10deg));
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.4) rotate(var(--rotation, 10deg));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2) rotate(var(--rotation, 10deg));
+    opacity: 1;
+  }
+}
+
+.chain-link-new {
+  animation: linkAdded 0.8s ease-out forwards !important;
+  z-index: 3 !important; /* Ensure animated links appear on top */
+}
+
 .input-container {
   display: flex;
   gap: 10px;
@@ -296,6 +527,27 @@ button:hover {
   flex: 1;
   max-width: 800px;
   margin: 0 auto;
+}
+
+/* Give all direct children of input-container an order for responsive layout */
+.input-container > * {
+  order: 1;
+}
+
+.input-container > input[type="text"] {
+  order: 1;
+}
+
+.input-container > button {
+  order: 2;
+}
+
+.input-container > .score-display {
+  order: 3;
+}
+
+.input-container > .chain-progress-container {
+  order: 4;
 }
 
 #vowel-selection {
@@ -412,6 +664,17 @@ button:hover {
 .game-over-message h2 {
   color: #2e7d32;
   margin-top: 0;
+}
+
+.game-over-message .final-score {
+  font-weight: bold;
+  color: #4caf50;
+  font-size: 1.2em;
+}
+
+.game-over-message .max-score {
+  font-size: 0.9em;
+  color: #555;
 }
 
 @keyframes slideDown {

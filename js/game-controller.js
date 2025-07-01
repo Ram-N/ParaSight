@@ -33,6 +33,8 @@ import {
   setupMarketplace,
   updateLetterCounts,
   showToast,
+  animateClueForWord,
+  updateInputState
 } from "./ui-manager.js";
 
 import {
@@ -141,6 +143,9 @@ function handleGuess(e) {
       } else {
         showToast(`Correct! You earned ${result.pointsEarned} links.`, "success");
       }
+      
+      // Animate the clue tumbling down
+      animateClueForWord(word.word);
     }
 
     if (result.gameComplete) {
@@ -240,6 +245,11 @@ function setupGuessInput() {
       } else {
         showToast(`Correct! You earned ${result.pointsEarned} links.`, "success");
       }
+      
+      // Animate the clue tumbling down
+      if (word) {
+        animateClueForWord(word.word);
+      }
 
       if (result.gameComplete) {
         showGameOver();
@@ -278,7 +288,7 @@ function setupGuessInput() {
 function renderGameState() {
   renderParagraph(""); // Start with no vowels revealed
   renderClues();
-  updateScore();
+  updateScore(); // This now also updates chain links
 }
 
 /**
@@ -468,12 +478,16 @@ export async function initializeGame() {
         updateScore();
         // Show letter tiles without counts
         updateLetterCounts(false);
+        // Disable input and submit button during selection phase
+        updateInputState();
         // Show toast prompting letter selection
         showToast("Please select 1 vowel and 2 consonants to begin", "info", 10000);
       } else {
         // Normal game initialization (after selection or on reload)
         renderGameState();
         updateLetterCounts(true); // Update initial letter counts
+        // Make sure input is enabled
+        updateInputState();
       }
     }, 0);
   } catch (error) {
