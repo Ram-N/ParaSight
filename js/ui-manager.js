@@ -37,6 +37,7 @@ import {
   getLowestClueIndexSeen,
   gameState,
   revealSelectedLetters,
+  showInitialCluesAfterSelection,
 } from "./game-state.js";
 
 import {
@@ -448,8 +449,20 @@ function setupClueInteractions() {
  * Separates active and solved clues with a tumble-down animation
  */
 export function renderClues() {
-  const cluesList = document.getElementById("clues-list");
-  if (!cluesList) return;
+  // First check if the parent container exists
+  const cluesContainer = document.getElementById("clues-container");
+  if (!cluesContainer) {
+    console.error("clues-container element not found");
+    return;
+  }
+  
+  let cluesList = document.getElementById("clues-list");
+  if (!cluesList) {
+    // Create the clues-list if it doesn't exist
+    cluesList = document.createElement("ul");
+    cluesList.id = "clues-list";
+    cluesContainer.appendChild(cluesList);
+  }
 
   cluesList.innerHTML = "";
   
@@ -604,6 +617,18 @@ export function renderClues() {
   // Only add solved container if there are solved clues
   if (solvedClueCount > 0) {
     cluesList.appendChild(solvedCluesContainer);
+  }
+  
+  // Always scroll to the top to show active clues first
+  const cluesSection = document.getElementById("clues-section");
+  if (cluesSection) {
+    cluesSection.scrollTop = 0;
+  }
+  
+  // Also scroll the clues container itself if it has its own scroll
+  const cluesContainer = document.getElementById("clues-container");
+  if (cluesContainer) {
+    cluesContainer.scrollTop = 0;
   }
   
   // Set up hover interactions
@@ -812,6 +837,11 @@ export function updateLetterCounts(showCounts = true) {
   const letterTiles = document.querySelectorAll(".letter-tile");
   const letterCounts = getLetterCounts();
   
+  // Get selected letters to ensure they stay blue even when count is zero
+  const selectedVowel = getSelectedVowel();
+  const selectedConsonants = getSelectedConsonants();
+  const selectedLetters = new Set([selectedVowel, ...selectedConsonants].filter(Boolean));
+  
   letterTiles.forEach((tile) => {
     const letter = tile.getAttribute("data-letter");
     if (!letter) return;
@@ -827,9 +857,19 @@ export function updateLetterCounts(showCounts = true) {
     if (showCounts) {
       // Only show non-zero counts
       countSpan.textContent = count > 0 ? count.toString() : "";
+      
+      // Style the tile based on count and selection status
+      if (count === 0 && !selectedLetters.has(letter) && !tile.classList.contains("purchased")) {
+        // Gray out tiles with zero count (unless they're selected initial letters)
+        tile.classList.add("empty");
+      } else {
+        tile.classList.remove("empty");
+      }
     } else {
       // Hide all counts in initial selection phase
       countSpan.textContent = "";
+      // Don't apply empty styling during initial phase
+      tile.classList.remove("empty");
     }
   });
 }
@@ -986,6 +1026,9 @@ function checkSelectionComplete() {
     
     // Initialize the game with the selected letters
     revealSelectedLetters();
+    
+    // Show initial clues now that selection is complete
+    showInitialCluesAfterSelection();
     
     // Update the UI to reflect the revealed letters
     renderParagraph(getChosenVowel());

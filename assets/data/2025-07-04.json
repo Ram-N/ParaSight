@@ -1,4 +1,8 @@
 {
+  "text": "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair.",
+  "title": "A Tale of Two Cities by Charles Dickens",
+  "id": "a-tale-of-two-cities",
+  "author": "Charles Dickens",
   "date": "2025-07-01",
   "hiddenWords": [
     {
@@ -7,17 +11,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "When you're at the top, you might just be this.",
+          "clue": "When you're at the top, you might just be this.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "Opposite of worst, often signifying superiority.",
+          "clue": "Opposite of worst, often signifying superiority.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "Of the most excellent or desirable type or quality.",
+          "clue": "Of the most excellent or desirable type or quality.",
           "points": 1
         }
       ],
@@ -29,17 +33,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "When things couldn't get any lower, you've hit this point.",
+          "clue": "When things couldn't get any lower, you've hit this point.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "Opposite of best, indicating inferiority or misfortune.",
+          "clue": "Opposite of best, indicating inferiority or misfortune.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "Of the poorest quality or the most unfavorable kind.",
+          "clue": "Of the poorest quality or the most unfavorable kind.",
           "points": 1
         }
       ],
@@ -51,17 +55,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A sage often possesses this, guiding their choices and understanding.",
+          "clue": "A sage often possesses this, guiding their choices and understanding.",
           "points": 6
         },
         {
           "type": "Suggestive",
-          "text": "The quality of having experience, knowledge, and good judgment.",
+          "clue": "The quality of having experience, knowledge, and good judgment.",
           "points": 4
         },
         {
           "type": "Straight",
-          "text": "The quality of being wise.",
+          "clue": "The quality of being wise.",
           "points": 2
         }
       ],
@@ -73,17 +77,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "One might trip over their own decisions when embracing this state.",
+          "clue": "One might trip over their own decisions when embracing this state.",
           "points": 6
         },
         {
           "type": "Suggestive",
-          "text": "Lack of good sense or judgment; folly.",
+          "clue": "Lack of good sense or judgment; folly.",
           "points": 4
         },
         {
           "type": "Straight",
-          "text": "The quality of being foolish.",
+          "clue": "The quality of being foolish.",
           "points": 2
         }
       ],
@@ -95,17 +99,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A marker in history, often signaling the dawn of something significant.",
+          "clue": "A marker in history, often signaling the dawn of something significant.",
           "points": 7
         },
         {
           "type": "Suggestive",
-          "text": "A long and distinct period of history or life, marked by notable events.",
+          "clue": "A long and distinct period of history or life, marked by notable events.",
           "points": 5
         },
         {
           "type": "Straight",
-          "text": "A period of time in history or a person's life, typically one marked by notable events or particular characteristics.",
+          "clue": "A period of time in history or a person's life, typically one marked by notable events or particular characteristics.",
           "points": 3
         }
       ],
@@ -117,17 +121,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "It can move mountains, or at least your conviction in them.",
+          "clue": "It can move mountains, or at least your conviction in them.",
           "points": 6
         },
         {
           "type": "Suggestive",
-          "text": "Acceptance that a statement is true or that something exists.",
+          "clue": "Acceptance that a statement is true or that something exists.",
           "points": 4
         },
         {
           "type": "Straight",
-          "text": "An acceptance that something is true or exists.",
+          "clue": "An acceptance that something is true or exists.",
           "points": 2
         }
       ],
@@ -139,17 +143,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "When the unbelievable unfolds, this state of mind often follows.",
+          "clue": "When the unbelievable unfolds, this state of mind often follows.",
           "points": 7
         },
         {
           "type": "Suggestive",
-          "text": "The state of being unwilling or unable to believe something.",
+          "clue": "The state of being unwilling or unable to believe something.",
           "points": 5
         },
         {
           "type": "Straight",
-          "text": "The state of being unwilling or unable to believe something.",
+          "clue": "The state of being unwilling or unable to believe something.",
           "points": 3
         }
       ],
@@ -161,17 +165,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "It banishes shadows and reveals the truth.",
+          "clue": "It banishes shadows and reveals the truth.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "The natural agent that stimulates sight and makes things visible.",
+          "clue": "The natural agent that stimulates sight and makes things visible.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "The natural agent that makes things visible.",
+          "clue": "The natural agent that makes things visible.",
           "points": 1
         }
       ],
@@ -183,17 +187,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "Where shadows reside and vision fades.",
+          "clue": "Where shadows reside and vision fades.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "The absence of light.",
+          "clue": "The absence of light.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "The absence of light.",
+          "clue": "The absence of light.",
           "points": 1
         }
       ],
@@ -205,43 +209,21 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A tiny spark that keeps possibilities alive, even in the bleakest moments.",
+          "clue": "A tiny spark that keeps possibilities alive, even in the bleakest moments.",
           "points": 6
         },
         {
           "type": "Suggestive",
-          "text": "A feeling of expectation and desire for a certain thing to happen.",
+          "clue": "A feeling of expectation and desire for a certain thing to happen.",
           "points": 4
         },
         {
           "type": "Straight",
-          "text": "A feeling of expectation and desire.",
+          "clue": "A feeling of expectation and desire.",
           "points": 2
         }
       ],
-      "related_words": ["despair"]
-    },
-    {
-      "word": "despair",
-      "difficulty": "Intermediate",
-      "clues": [
-        {
-          "type": "Indirect",
-          "text": "When all seems lost and the well of optimism runs dry.",
-          "points": 6
-        },
-        {
-          "type": "Suggestive",
-          "text": "The complete loss or absence of hope.",
-          "points": 4
-        },
-        {
-          "type": "Straight",
-          "text": "The complete loss or absence of hope.",
-          "points": 2
-        }
-      ],
-      "related_words": ["hope"]
+      "related_words": []
     }
   ]
 }

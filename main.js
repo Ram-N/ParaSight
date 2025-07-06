@@ -164,24 +164,37 @@ window.onload = () => {
         dayElement.classList.add("today");
       }
       
-      // Mark days that have content
+      // Mark days that have content and handle clickability
       if (daysWithContent.includes(thisDateStr)) {
         dayElement.classList.add("has-content");
-      }
-      
-      // Add click handler to select date
-      dayElement.addEventListener("click", () => {
-        // More comprehensive check if game is in progress
-        const isGameInProgress = document.querySelectorAll('#clues-list li.found').length > 0 || 
-                                 document.querySelectorAll('.letter-tile.purchased').length > 0 ||
-                                 !document.getElementById('selection-instructions') || 
-                                 (document.getElementById('selection-instructions') && 
-                                  document.getElementById('selection-instructions').style.display === 'none');
         
-        if (isGameInProgress) {
-          // Ask for confirmation before changing date and resetting game
-          if (confirm("Changing the date will reset your current game progress. Continue?")) {
-            // Update current date and display
+        // Add click handler to select date (only for dates with content)
+        dayElement.addEventListener("click", () => {
+          // More comprehensive check if game is in progress
+          const isGameInProgress = document.querySelectorAll('#clues-list li.found').length > 0 || 
+                                   document.querySelectorAll('.letter-tile.purchased').length > 0 ||
+                                   !document.getElementById('selection-instructions') || 
+                                   (document.getElementById('selection-instructions') && 
+                                    document.getElementById('selection-instructions').style.display === 'none');
+          
+          if (isGameInProgress) {
+            // Ask for confirmation before changing date and resetting game
+            if (confirm("Changing the date will reset your current game progress. Continue?")) {
+              // Update current date and display
+              currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+              updateDateDisplay(currentDate);
+              
+              // Log the selected date for debugging
+              console.log(`Selected date: ${currentDate.toISOString().split('T')[0]}`);
+              
+              // Hide calendar
+              customCalendar.classList.remove("show");
+              
+              // Reinitialize game with new date
+              initializeGame();
+            }
+          } else {
+            // No game in progress, proceed without confirmation
             currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
             updateDateDisplay(currentDate);
             
@@ -194,21 +207,11 @@ window.onload = () => {
             // Reinitialize game with new date
             initializeGame();
           }
-        } else {
-          // No game in progress, proceed without confirmation
-          currentDate = new Date(calendarCurrentYear, calendarCurrentMonth, day);
-          updateDateDisplay(currentDate);
-          
-          // Log the selected date for debugging
-          console.log(`Selected date: ${currentDate.toISOString().split('T')[0]}`);
-          
-          // Hide calendar
-          customCalendar.classList.remove("show");
-          
-          // Reinitialize game with new date
-          initializeGame();
-        }
-      });
+        });
+      } else {
+        // For dates without content, add a class to show they're not clickable
+        dayElement.classList.add("no-content");
+      }
       
       calendarDaysContainer.appendChild(dayElement);
     }
@@ -320,48 +323,7 @@ window.onload = () => {
       const dateStr = currentDate.toISOString().split('T')[0];
       console.log(`Navigated to date: ${dateStr}`);
       
-      // Find the nearest date with content
-      if (daysWithContent.length > 0) {
-        // If we're navigating and the target date doesn't have content
-        // find the nearest date with content in the direction we're moving
-        const sortedDates = [...daysWithContent].sort();
-        let nearestDate = null;
-        
-        if (isLeft) {
-          // When going left (backward), find the nearest date less than current
-          for (let i = sortedDates.length - 1; i >= 0; i--) {
-            if (sortedDates[i] < dateStr) {
-              nearestDate = sortedDates[i];
-              break;
-            }
-          }
-          // If no earlier date found, wrap around to the latest date
-          if (!nearestDate) {
-            nearestDate = sortedDates[sortedDates.length - 1];
-          }
-        } else {
-          // When going right (forward), find the nearest date greater than current
-          for (let i = 0; i < sortedDates.length; i++) {
-            if (sortedDates[i] > dateStr) {
-              nearestDate = sortedDates[i];
-              break;
-            }
-          }
-          // If no later date found, wrap around to the earliest date
-          if (!nearestDate) {
-            nearestDate = sortedDates[0];
-          }
-        }
-        
-        if (nearestDate) {
-          // Update currentDate to the nearest date with content
-          currentDate = new Date(nearestDate);
-          updateDateDisplay(currentDate);
-          console.log(`Navigated to nearest date with content: ${nearestDate}`);
-        }
-      }
-      
-      // Reinitialize game with new date (or random if no content)
+      // Reinitialize game with new date
       initializeGame();
     });
   });

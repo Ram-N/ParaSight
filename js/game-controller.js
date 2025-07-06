@@ -22,6 +22,7 @@ import {
   revealNextSuffix,
   initializeSuffixes,
   resetGameState,
+  showInitialCluesAfterSelection,
 } from "./game-state.js";
 
 import {
@@ -407,19 +408,41 @@ export async function initializeGame() {
         if (selectedParagraph) {
           console.log(`Found matching paragraph for date: ${formattedDate}`);
         } else {
-          console.log(`No paragraph found for date: ${formattedDate}, selecting random paragraph`);
+          console.log(`No paragraph found for date: ${formattedDate}`);
         }
       } catch (error) {
         console.error("Error parsing date:", error);
       }
     }
     
-    // If no paragraph found for the current date, pick a random one
+    // If no paragraph found for the current date, handle appropriately
     if (!selectedParagraph) {
-      const randomIndex = Math.floor(Math.random() * allParagraphs.length);
-      /** @type {typeof allParagraphs[0]} */
-      selectedParagraph = allParagraphs[randomIndex];
-      console.log(`Selected random paragraph with ID: ${selectedParagraph.id}`);
+      // Display a message that no puzzle is available for this date
+      const container = document.getElementById("paragraph-container");
+      const dateElement = document.getElementById("current-date");
+      const displayDate = dateElement ? dateElement.textContent : "this date";
+      
+      if (container) {
+        container.innerHTML = `
+          <div class="no-puzzle-message">
+            <h3>No puzzle available for ${displayDate}</h3>
+            <p>Use the arrow buttons to navigate to a date with a puzzle.</p>
+          </div>
+        `;
+      }
+      
+      // Clear other game elements
+      const cluesContainer = document.getElementById("clues-container");
+      if (cluesContainer) {
+        cluesContainer.innerHTML = "";
+      }
+      
+      const scoreValue = document.getElementById("score-value");
+      const maxScoreValue = document.getElementById("max-score-value");
+      if (scoreValue) scoreValue.textContent = "0";
+      if (maxScoreValue) maxScoreValue.textContent = "0";
+      
+      return; // Exit early, don't try to initialize a game
     }
     if (!selectedParagraph || !Array.isArray(selectedParagraph.hiddenWords)) {
       throw new Error("Invalid paragraph data structure");
@@ -428,8 +451,8 @@ export async function initializeGame() {
     const initialWords = selectedParagraph.hiddenWords
       .filter(
         /** @param {import('./game-state.js').GameWord} word */ (word) => {
-          // Test if word appears exactly in the text
-          const wordRegex = new RegExp(`\\b${word.word}\\b`, "g");
+          // Test if word appears in the text (case-insensitive)
+          const wordRegex = new RegExp(`\\b${word.word}\\b`, "gi");
           const exists = wordRegex.test(selectedParagraph.text);
           if (!exists) {
             console.warn(
@@ -448,7 +471,7 @@ export async function initializeGame() {
           while ((match = wordRegex.exec(selectedParagraph.text)) !== null) {
             positions.push({
               start: match.index,
-              end: match.index + word.word.length,
+              end: match.index + match[0].length, // Use actual match length in case of different casing
             });
           }
 
@@ -472,6 +495,8 @@ export async function initializeGame() {
     setTimeout(() => {
       // If we're in init phase, show different UI state
       if (isInitPhase() && !isSelectionComplete()) {
+        // Show initial clues first, then render
+        showInitialCluesAfterSelection();
         // Only render the paragraph with masked words without revealing any letters
         renderParagraph("");
         renderClues();
@@ -484,6 +509,10 @@ export async function initializeGame() {
         showToast("Please select 1 vowel and 2 consonants to begin", "info", 10000);
       } else {
         // Normal game initialization (after selection or on reload)
+        // Make sure we have initial clues if selection is already complete
+        if (isSelectionComplete()) {
+          showInitialCluesAfterSelection();
+        }
         renderGameState();
         updateLetterCounts(true); // Update initial letter counts
         // Make sure input is enabled

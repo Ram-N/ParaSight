@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClueChain Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #4a90e2;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>ClueChain Navigation & Game Reset Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Instructions</h2>
+            <div class="test-step">
+                <strong>Step 1:</strong> Open the main game in the iframe below
+            </div>
+            <div class="test-step">
+                <strong>Step 2:</strong> Use arrow navigation to go to July 3rd (or any past date)
+            </div>
+            <div class="test-step">
+                <strong>Step 3:</strong> Select 1 vowel and 2 consonants as prompted
+            </div>
+            <div class="test-step">
+                <strong>Step 4:</strong> Verify that 3 clues appear immediately after selection
+            </div>
+            <div class="test-step">
+                <strong>Step 5:</strong> Verify that selected letters appear in the paragraph
+            </div>
+            <div class="test-step">
+                <strong>Step 6:</strong> Navigate to a different date and repeat
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Expected Results</h2>
+            <div class="result success">
+                ✓ Arrow navigation advances exactly one day at a time
+            </div>
+            <div class="result success">
+                ✓ After letter selection, 3 clues appear immediately
+            </div>
+            <div class="result success">
+                ✓ Selected letters fill in the paragraph text
+            </div>
+            <div class="result success">
+                ✓ Game state resets properly when navigating between dates
+            </div>
+            <div class="result success">
+                ✓ Dates without puzzles show "No puzzle available" message
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button onclick="reloadGame()">Reload Game</button>
+            <button onclick="clearConsole()">Clear Console</button>
+            <button onclick="showConsole()">Show Console Messages</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Game Instance</h2>
+            <iframe id="gameFrame" src="index.html"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2>Console Output</h2>
+            <div id="consoleOutput" style="background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        function reloadGame() {
+            document.getElementById('gameFrame').src = 'index.html?' + Date.now();
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '';
+        }
+
+        function showConsole() {
+            const consoleDiv = document.getElementById('consoleOutput');
+            consoleDiv.innerHTML += '<div>[' + new Date().toLocaleTimeString() + '] Test page loaded</div>';
+        }
+
+        // Capture console messages from iframe (if possible)
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'console') {
+                const consoleDiv = document.getElementById('consoleOutput');
+                consoleDiv.innerHTML += '<div>[' + new Date().toLocaleTimeString() + '] ' + event.data.message + '</div>';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+        });
+
+        // Initialize
+        showConsole();
+    </script>
+</body>
+</html>

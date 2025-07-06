@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Exports</title>
+</head>
+<body>
+    <h1>Testing Exports</h1>
+    <div id="result"></div>
+    
+    <script type="module">
+        try {
+            const { showInitialClues } = await import('./js/game-state.js');
+            document.getElementById('result').innerHTML = `
+                <div style="color: green;">✓ showInitialClues imported successfully</div>
+                <div>Function type: ${typeof showInitialClues}</div>
+            `;
+            console.log('showInitialClues:', showInitialClues);
+        } catch (error) {
+            document.getElementById('result').innerHTML = `
+                <div style="color: red;">✗ Error importing showInitialClues: ${error.message}</div>
+            `;
+            console.error('Import error:', error);
+        }
+    </script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 {
-  "date": "2025-07-01",
+  "title": "Frederick Douglass's Fourth of July Speech ClueChain",
+  "id": "douglass-speech-cluechain-2025-07-01",
+  "date": "2025-07-05",
+  "text": "On July 5, 1852, Frederick Douglass gave a keynote address at an Independence Day celebration and asked, “What to the Slave is the Fourth of July?” Douglass was a powerful orator, often traveling six months out of the year to give lectures on abolition. His speech, given at an event commemorating the signing of the Declaration of Independence, was held at Corinthian Hall in Rochester, New York. It was a scathing speech in which Douglass stated, “This Fourth of July is yours, not mine, You may rejoice, I must mourn.”",
   "hiddenWords": [
     {
       "word": "Slave",
@@ -7,17 +10,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A cog in a machine of forced labor, whose chains are forged by another's will.",
+          "clue": "A cog in a machine of forced labor, whose chains are forged by another's will.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "One held in bondage, deprived of freedom and personal rights.",
+          "clue": "One held in bondage, deprived of freedom and personal rights.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "A person who is the legal property of another and is forced to obey them.",
+          "clue": "A person who is the legal property of another and is forced to obey them.",
           "points": 1
         }
       ],
@@ -29,17 +32,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "The month when fireworks light up the night for a nation's birth.",
+          "clue": "The month when fireworks light up the night for a nation's birth.",
           "points": 4
         },
         {
           "type": "Suggestive",
-          "text": "The seventh month of the year, often associated with summer and independence.",
+          "clue": "The seventh month of the year, often associated with summer and independence.",
           "points": 2
         },
         {
           "type": "Straight",
-          "text": "The seventh month of the Gregorian calendar.",
+          "clue": "The seventh month of the Gregorian calendar.",
           "points": 1
         }
       ],
@@ -51,17 +54,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "One who wields words as a weapon, stirring souls with their spoken art.",
+          "clue": "One who wields words as a weapon, stirring souls with their spoken art.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "A skilled public speaker, known for persuasive and eloquent speeches.",
+          "clue": "A skilled public speaker, known for persuasive and eloquent speeches.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "A public speaker, especially one who is eloquent or skilled.",
+          "clue": "A public speaker, especially one who is eloquent or skilled.",
           "points": 1
         }
       ],
@@ -73,17 +76,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A flow of structured sound, designed to convey a message from a podium.",
+          "clue": "A flow of structured sound, designed to convey a message from a podium.",
           "points": 4
         },
         {
           "type": "Suggestive",
-          "text": "A formal address delivered to an audience.",
+          "clue": "A formal address delivered to an audience.",
           "points": 2
         },
         {
           "type": "Straight",
-          "text": "The expression of thoughts and feelings in spoken language.",
+          "clue": "The expression of thoughts and feelings in spoken language.",
           "points": 1
         }
       ],
@@ -95,17 +98,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "A place where echoes of history often resound, and crowds gather for grand events.",
+          "clue": "A place where echoes of history often resound, and crowds gather for grand events.",
           "points": 4
         },
         {
           "type": "Suggestive",
-          "text": "A large room or building used for public meetings or entertainment.",
+          "clue": "A large room or building used for public meetings or entertainment.",
           "points": 2
         },
         {
           "type": "Straight",
-          "text": "A building or large room for public assembly.",
+          "clue": "A building or large room for public assembly.",
           "points": 1
         }
       ],
@@ -117,17 +120,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "To leap with joy and sing praises, especially in celebration of triumph.",
+          "clue": "To leap with joy and sing praises, especially in celebration of triumph.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "To feel or show great joy or delight.",
+          "clue": "To feel or show great joy or delight.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "To feel or show great happiness or delight.",
+          "clue": "To feel or show great happiness or delight.",
           "points": 1
         }
       ],
@@ -139,17 +142,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "To wear the color of sorrow, reflecting a deep personal loss or profound sadness.",
+          "clue": "To wear the color of sorrow, reflecting a deep personal loss or profound sadness.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "To feel or express deep sadness or grief, often for a death.",
+          "clue": "To feel or express deep sadness or grief, often for a death.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "To feel or show sorrow or grief.",
+          "clue": "To feel or show sorrow or grief.",
           "points": 1
         }
       ],
@@ -161,17 +164,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "The ordinal position that often signifies a major American holiday.",
+          "clue": "The ordinal position that often signifies a major American holiday.",
           "points": 4
         },
         {
           "type": "Suggestive",
-          "text": "Coming after the third in order or in a sequence.",
+          "clue": "Coming after the third in order or in a sequence.",
           "points": 2
         },
         {
           "type": "Straight",
-          "text": "The ordinal number corresponding to the number four.",
+          "clue": "The ordinal number corresponding to the number four.",
           "points": 1
         }
       ],
@@ -183,17 +186,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "More than just a location, it's a formal presentation or a direct communication.",
+          "clue": "More than just a location, it's a formal presentation or a direct communication.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "To speak to a person or an assembly.",
+          "clue": "To speak to a person or an assembly.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "A formal speech delivered to an audience.",
+          "clue": "A formal speech delivered to an audience.",
           "points": 1
         }
       ],
@@ -205,17 +208,17 @@
       "clues": [
         {
           "type": "Indirect",
-          "text": "Formal dissertations often accompanied by notes and a captive audience.",
+          "clue": "Formal dissertations often accompanied by notes and a captive audience.",
           "points": 5
         },
         {
           "type": "Suggestive",
-          "text": "Educational talks delivered to a group of people, often in a university setting.",
+          "clue": "Educational talks delivered to a group of people, often in a university setting.",
           "points": 3
         },
         {
           "type": "Straight",
-          "text": "An educational talk to an audience, especially one given by a university professor.",
+          "clue": "An educational talk to an audience, especially one given by a university professor.",
           "points": 1
         }
       ],
